@@ -206,7 +206,6 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 				this.nextRenderIndex + nbrRender,
 				Math.pow(2, this.sampleLevelMax)
 			);
-			console.log(this.nextRenderIndex);
 		}
 
 		return nbrRenderToDo -= nbrRender;
@@ -277,9 +276,8 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 				for (var i = 0; i < Math.min(size,8) ; i++){
 					this.uniforms[ "texture"+ i ].value = this.renderTarget[i].texture;
 				}
-
 			}
-			console.log(size);
+
 		}
 
 	},
