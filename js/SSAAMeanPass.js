@@ -33,6 +33,11 @@ THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
   } );
 
 	// Final Scene
+
+	if (THREE.REVISION !== "101"){
+		console.error("In next versions of threejs line 41 to 47:\n this.quad = new THREE.Pass.FullScreenQuad( this.material );");
+	}
+
 	this.cameraQuad = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 	this.sceneQuad = new THREE.Scene();
 
@@ -54,6 +59,10 @@ THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 		fragmentShader: shader.fragmentShader
 
 	} );
+
+	if (THREE.REVISION !== "101"){
+		console.error("In next versions of threejs line 67 to 73:\n this.quadMean = new THREE.Pass.FullScreenQuad( this.materialMean );");
+	}
 
 	this.sceneQuadMean = new THREE.Scene();
 
@@ -198,6 +207,9 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
           width, height );
       }
 
+			if (THREE.REVISION !== "101"){
+				console.error("In next versions of threejs :\n render.setRenderTarget(this.renderTarget[ i + beginning ]); \n renderer.clear(); \n this.renderer( this.scene, this.camera);");
+			}
       renderer.render( this.scene, this.camera , this.renderTarget[ i + beginning ]);
     }
 
@@ -251,6 +263,10 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 					for (var i = 0; i < 8 ; i++){
 						this.uniformsMean[ "texture" + i ].value =
 						this.renderTarget[i].texture;
+					}
+
+					if (THREE.REVISION !== "101"){
+						console.error("In next versions of threejs :\n render.setRenderTarget( [this.nextRenderMeanIndex] ); \n this.quadMean( renderer );");
 					}
 
 					renderer.render(
@@ -320,9 +336,17 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 
 		if ( this.renderToScreen ) {
 
+			if (THREE.REVISION !== "101"){
+				console.error("In next versions of threejs :\n renderer.setRenderTarget( null ); \n this.quad.render( renderer );");
+			}
+
 			renderer.render( this.sceneQuad, this.cameraQuad );
 
 		} else {
+
+			if (THREE.REVISION !== "101"){
+				console.error("In next versions of threejs :\n renderer.setRenderTarget( writeBuffer ); \n if ( this.clear ) renderer.clear();\n this.quad.render( renderer );");
+			}
 
 			if ( this.clear ) renderer.clear();
 			renderer.render( this.sceneQuad, this.cameraQuad , writeBuffer);

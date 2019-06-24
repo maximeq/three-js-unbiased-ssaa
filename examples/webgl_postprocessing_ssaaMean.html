@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - postprocessing manual taa and ssaa</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+	<body>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Temporal Anti-Aliasing (TAA) pass by <a href="https://clara.io" target="_blank" rel="noopener">Ben Houston</a><br/><br/>
+			When there is no motion in the scene, the SSAAMeanPass compute the renderers<br/>
+			needed to create a high quality anti-aliased result.<br/><br/>
+
+		</div>
+
+		<div id="container"></div>
+
+    <script src="../node_modules/three-full/builds/Three.iife.js"></script>
+		<script>
+		var THREE = THREE || Three;
+		</script>
+
+		<script src="../js/SSAAMeanPass.js"></script>
+		<script src="../js/MeanShader.js"></script>
+		<script src='../js/dat.gui.min.js'></script>
+
+
+		<script>
+
+			var camera, scene, renderer, composer, copyPass, taaRenderPass, renderPass;
+			var gui, stats;
+			var index = 0;
+
+			init();
+      animate();
+
+
+			function init() {
+
+				var container = document.getElementById( "container" );
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				//
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.z = 300;
+
+				scene = new THREE.Scene();
+
+				var geometry = new THREE.BoxBufferGeometry( 120, 120, 120 );
+				var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
+
+				var mesh = new THREE.Mesh( geometry, material );
+				mesh.position.x = - 100;
+				scene.add( mesh );
+
+				var texture = new THREE.TextureLoader().load( "textures/brick_diffuse.jpg" );
+				texture.minFilter = THREE.NearestFilter;
+				texture.magFilter = THREE.NearestFilter;
+				texture.anisotropy = 1;
+				texture.generateMipmaps = false;
+
+				var material = new THREE.MeshBasicMaterial( { map: texture } );
+
+				var mesh = new THREE.Mesh( geometry, material );
+				mesh.position.x = 100;
+				scene.add( mesh );
+
+				// postprocessing
+
+				composer = new THREE.EffectComposer( renderer );
+
+				meanPass = new THREE.SSAAMeanPass( scene, camera );
+				composer.addPass( meanPass );
+
+				renderPass = new THREE.RenderPass( scene, camera );
+				renderPass.enabled = false;
+				composer.addPass( renderPass );
+
+				copyPass = new THREE.ShaderPass( THREE.CopyShader );
+        copyPass.renderToScreen = true;
+				composer.addPass( copyPass );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+        params = {
+					postprocessing: true,
+					sampleLevelMax: 5,
+					sampleLevelMin: 0
+				};
+
+        gui = new dat.GUI();
+        gui.add( params, 'postprocessing' );
+        gui.add( params, 'sampleLevelMax', {
+          'Level 0: 1 Sample': 0,
+          'Level 1: 2 Samples': 1,
+          'Level 2: 4 Samples': 2,
+          'Level 3: 8 Samples': 3,
+          'Level 4: 16 Samples': 4,
+          'Level 5: 32 Samples': 5
+        } );
+
+        gui.add( params, 'sampleLevelMin', {
+          'Level 0: 1 Sample': 0,
+          'Level 1: 2 Samples': 1,
+          'Level 2: 4 Samples': 2,
+          'Level 3: 8 Samples': 3,
+          'Level 4: 16 Samples': 4,
+          'Level 5: 32 Samples': 5
+        } );
+			}
+
+			function onWindowResize() {
+
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
+
+			}
+
+			function animate() {
+
+        var delayInMilliseconds = 0; //1 second
+        if (meanPass.changed === false && meanPass.finalRenderDone===false){
+          setTimeout(function() {
+            requestAnimationFrame( animate );
+            //your code to be executed after 1 second
+          }, delayInMilliseconds);
+
+        } else {
+          requestAnimationFrame( animate );
+        }
+
+				index ++;
+
+
+        meanPass.setSampleLevelMax(params.sampleLevelMax);
+        meanPass.setSampleLevelMin(params.sampleLevelMin);
+
+
+				if ( Math.round( index / 200 ) % 2 === 0 ) {
+
+					for ( var i = 0; i < scene.children.length; i ++ ) {
+
+						var child = scene.children[ i ];
+
+						child.rotation.x += 0.005;
+						child.rotation.y += 0.01;
+
+					}
+					if ( meanPass ) meanPass.setChanged(true);
+
+				} else {
+					if ( meanPass ) meanPass.setChanged(false);
+
+				}
+
+        if ( params.postprocessing){
+          composer.render();
+        } else if (!params.postprocessing) {
+          renderer.render( scene, camera );
+        }
+
+			}
+
+		</script>
+	</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js WebGL  - postprocessing - FXAA</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			body {
+				background-color: #fff;
+				color: #222;
+			}
+			a {
+				color: #08f;
+			}
+			#container {
+				position: absolute;
+				top: 80px;
+				width: 100%;
+				bottom: 0px;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - postprocessing - SSAAMean  - SSAARender<br />
+			Left scene processed with SSAAMean (changed = true), right scene is rendered with SSAARender (unbiased = true).
+			The Shadow texture is parasitized with circles when the SSAARender is on.
+		</div>
+		<div id="container">
+		</div>
+
+		<script src="../node_modules/three-full/builds/Three.iife.js"></script>
+		<script>
+		var THREE = THREE || Three;
+		</script>
+
+		<script src="../js/SSAAMeanPass.js"></script>
+		<script src="../js/MeanShader.js"></script>
+		<script src='../js/dat.gui.min.js'></script>
+
+		<script>
+
+			var camera, scene, renderer, clock, group;
+			var composer1, composer2, ssaaRenderPass, meanPass;
+
+      var params = {
+        sampleLevel: 3,
+        renderToScreen: false,
+        unbiased: true,
+        camera: 'perspective',
+        clearColor: 'black',
+        clearAlpha: 1.0,
+        autoRotate: true
+      };
+			var compt = 0;
+
+			init();
+			animate();
+			function init() {
+
+				var container = document.getElementById( 'container' );
+
+				camera = new THREE.PerspectiveCamera( 45, ( container.offsetWidth * 0.5 ) / container.offsetHeight, 1, 2000 );
+				camera.position.z = 2;
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xffffff );
+				scene.fog = new THREE.Fog( 0xcccccc, 100, 1500 );
+				clock = new THREE.Clock();
+				//
+        var light = new THREE.PointLight( 0xddffdd, 1.0 );
+				light.position.z = 70;
+				light.position.y = - 70;
+				light.position.x = - 70;
+				scene.add( light );
+
+				var light2 = new THREE.PointLight( 0xffdddd, 1.0 );
+				light2.position.z = 70;
+				light2.position.x = - 70;
+				light2.position.y = 70;
+				scene.add( light2 );
+
+				var light3 = new THREE.PointLight( 0xddddff, 1.0 );
+				light3.position.z = 70;
+				light3.position.x = 70;
+				light3.position.y = - 70;
+				scene.add( light3 );
+
+				var light3 = new THREE.AmbientLight( 0xffffff, 0.05 );
+				scene.add( light3 );
+				//
+				group = new THREE.Group();
+
+
+        var material = new THREE.MeshStandardMaterial();
+        new THREE.OBJLoader()
+					.setPath( 'models/obj/cerberus/' )
+					.load( 'Cerberus.obj', function ( group ) {
+
+						var loader = new THREE.TextureLoader()
+							.setPath( 'models/obj/cerberus/' );
+
+						material.roughness = 1; // attenuates roughnessMap
+						material.metalness = 1; // attenuates metalnessMap
+
+						material.map = loader.load( 'Cerberus_A.jpg' );
+						// roughness is in G channel, metalness is in B channel
+						material.metalnessMap = material.roughnessMap = loader.load( 'Cerberus_RM.jpg' );
+						material.normalMap = loader.load( 'Cerberus_N.jpg' );
+
+						material.map.wrapS = THREE.RepeatWrapping;
+						material.roughnessMap.wrapS = THREE.RepeatWrapping;
+						material.metalnessMap.wrapS = THREE.RepeatWrapping;
+						material.normalMap.wrapS = THREE.RepeatWrapping;
+
+						group.traverse( function ( child ) {
+
+							if ( child instanceof THREE.Mesh ) {
+
+								child.material = material;
+
+							}
+
+						} );
+
+						group.position.x = - 0.45;
+						group.rotation.y = - Math.PI / 2;
+						group.position.y = 0.5;
+						scene.add( group );
+
+					} );
+
+				// Shadow
+
+
+				var geometryShadow = new THREE.PlaneBufferGeometry( 1, 0.5);
+				var textureShadow = new THREE.TextureLoader().load('textures/ring_ground_ao.jpg');
+				var materialShadow = new THREE.MeshBasicMaterial( {map: textureShadow, side: THREE.DoubleSide} );
+				var plane = new THREE.Mesh( geometryShadow, materialShadow );
+				plane.position.y=-0.1;
+				scene.add( plane );
+
+				//
+				renderer = new THREE.WebGLRenderer();
+				renderer.autoClear = false;
+				//renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( container.offsetWidth, container.offsetHeight );
+				container.appendChild( renderer.domElement );
+				//
+				var renderPass = new THREE.RenderPass( scene, camera );
+				//
+				meanPass = new THREE.SSAAMeanPass(scene, camera);
+				composer1 = new THREE.EffectComposer( renderer );
+				composer1.addPass( renderPass );
+				meanPass.renderToScreen = true;
+				meanPass.setChanged(true);
+				composer1.addPass( meanPass );
+
+
+				var copyPass = new THREE.ShaderPass( THREE.CopyShader );
+				composer2 = new THREE.EffectComposer( renderer );
+        ssaaRenderPass = new THREE.SSAARenderPass( scene, camera );
+				copyPass.renderToScreen = true;
+				composer2.addPass( renderPass );
+				composer2.addPass(ssaaRenderPass);
+				copyPass.renderToScreen = true;
+				composer2.addPass( copyPass );
+	0			//
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				gui = new dat.GUI();
+				gui.add( params, 'sampleLevel', {
+					'Level -1: 1 Sample': -1,
+					'Level 0: 1 Sample': 0,
+					'Level 1: 2 Samples': 1,
+					'Level 2: 4 Samples': 2,
+					'Level 3: 8 Samples': 3,
+					'Level 4: 16 Samples': 4,
+					'Level 5: 32 Samples': 5
+				} );
+			}
+			function onWindowResize() {
+				camera.aspect = ( container.offsetWidth * 0.5 ) / container.offsetHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( container.offsetWidth, container.offsetHeight );
+				composer1.setSize( container.offsetWidth, container.offsetHeight );
+				composer2.setSize( container.offsetWidth, container.offsetHeight );
+				var pixelRatio = renderer.getPixelRatio();
+				// fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
+				// fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
+			}
+			function animate() {
+				meanPass.setSampleLevelMin(params.sampleLevel);
+				ssaaRenderPass.sampleLevel = params.sampleLevel;
+
+				requestAnimationFrame( animate );
+
+				var halfWidth = container.offsetWidth / 2;
+				ssaaRenderPass.sampleLevel = params.sampleLevel;
+				ssaaRenderPass.unbiased = params.unbiased;
+
+				//group.rotation.y += clock.getDelta() * 0.1;
+				renderer.setViewport( 0, 0, halfWidth, container.offsetHeight );
+				composer1.render();
+				renderer.setViewport( halfWidth, 0, halfWidth, container.offsetHeight );
+				composer2.render(scene, camera);
+
+			}
+		</script>
+	</body>
+</html>
