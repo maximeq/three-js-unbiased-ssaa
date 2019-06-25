@@ -1,3 +1,6 @@
 node_modules
-examples/webgl_animation_keyframes.html
-libs/
+
+examples/plan_mean.html
+js/libs/
+examples/textures/cube
+examples/models/gltf

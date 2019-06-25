@@ -8,7 +8,6 @@ THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 
 	this.autoCheckChange = false;
 
-
   this.changed = false;
 	this.finalRenderDone = false;
 
@@ -23,14 +22,45 @@ THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 	var shader = THREE.MeanShader;
 
 	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+	this.texture = [];
 
-  this.material = new THREE.ShaderMaterial( {
+  var material1 = new THREE.ShaderMaterial( {
 
     uniforms: this.uniforms,
     vertexShader: shader.vertexShader,
     fragmentShader: shader.fragmentShader,
 
   } );
+	material1.defines[ 'NUMBER_TEXTURE' ] = 1.0;
+
+  var material2 = new THREE.ShaderMaterial( {
+
+    uniforms: this.uniforms,
+    vertexShader: shader.vertexShader,
+    fragmentShader: shader.fragmentShader,
+
+  } );
+	material2.defines[ 'NUMBER_TEXTURE' ] = 2.0;
+
+	var material4 = new THREE.ShaderMaterial( {
+
+		uniforms: this.uniforms,
+		vertexShader: shader.vertexShader,
+		fragmentShader: shader.fragmentShader,
+
+	} );
+	material4.defines[ 'NUMBER_TEXTURE' ] = 4.0;
+
+	var material8 = new THREE.ShaderMaterial( {
+
+		uniforms: this.uniforms,
+		vertexShader: shader.vertexShader,
+		fragmentShader: shader.fragmentShader,
+
+	} );
+	material8.defines[ 'NUMBER_TEXTURE' ] = 8.0;
+
+	this.material = [material1, material2, material4, material8];
 
 	// Final Scene
 
@@ -52,13 +82,14 @@ THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 	this.nextRenderIndex = 0;
 
 	this.uniformsMean = THREE.UniformsUtils.clone( shader.uniforms );
-	this.uniformsMean["sampleLevel"].value = 3;
+	this.textureMean = [];
 	this.materialMean = new THREE.ShaderMaterial( {
 		uniforms: this.uniformsMean,
 		vertexShader: shader.vertexShader,
 		fragmentShader: shader.fragmentShader
 
 	} );
+	this.materialMean.defines[ 'NUMBER_TEXTURE' ] = 8.0;
 
 	if (THREE.REVISION !== "101"){
 		console.error("In next versions of threejs line 67 to 73:\n this.quadMean = new THREE.Pass.FullScreenQuad( this.materialMean );");
@@ -86,7 +117,9 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 
 	dispose: function () {
 
-    this.material.dispose();
+		for (var i = 0 ; i < 4 ; i++){
+			this.material[i].dispose();
+		}
 
     for (var i = 0; i < this.renderTarget.length; i++){
   		if ( this.renderTarget[i] ) {
@@ -114,9 +147,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			this.sceneQuadMean[i].dispose();
 		}
 
-		for (var i = 0 ; i < 4 ; i++){
-			this.materialMean[i].dispose();
-		}
+		this.materialMean.dispose();
 
 	},
 
@@ -145,10 +176,12 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			this.nextRenderIndex = 0;
 			this.nextRenderMeanIndex = 0;
 		}
+		if ( this.sampleLevelMax < this.sampleLevelMin ) console.error( "SampleLevelMax must be higher than sampleLevelMin" );
 	},
 
 	setSampleLevelMin: function (levelMin){
 		this.sampleLevelMin = levelMin;
+		if ( this.sampleLevelMax < this.sampleLevelMin ) console.error( "SampleLevelMax must be higher than sampleLevelMin" );
 	},
 
 	setChanged: function (changed){
@@ -159,6 +192,10 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			this.nextRenderIndex = 0;
 			this.nextRenderMeanIndex = 0;
 		}
+	},
+
+	setAutoCheckChange: function (autoCheckChange){
+		this.autoCheckChange = autoCheckChange;
 	},
 
 	setSize: function ( width, height ) {
@@ -261,9 +298,9 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 
 					// We use 8 renderTargets per shader to do the average
 					for (var i = 0; i < 8 ; i++){
-						this.uniformsMean[ "texture" + i ].value =
-						this.renderTarget[i].texture;
+						this.textureMean[i] = this.renderTarget[i].texture;
 					}
+					this.uniformsMean[ "texture" ].value = this.textureMean;
 
 					if (THREE.REVISION !== "101"){
 						console.error("In next versions of threejs :\n render.setRenderTarget( [this.nextRenderMeanIndex] ); \n this.quadMean( renderer );");
@@ -275,23 +312,25 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 						this.renderTargetMean[this.nextRenderMeanIndex]
 					);
 
-					this.uniforms["texture" + this.nextRenderMeanIndex].value =
-					this.renderTargetMean[this.nextRenderMeanIndex].texture;
+					this.texture[this.nextRenderMeanIndex] = this.renderTargetMean[this.nextRenderMeanIndex].texture;
+					this.uniforms["texture"].value = this.texture;
+
 
 					this.nextRenderMeanIndex ++;
 
 				}
 				// Case of sampleLevel = 4 (16 samples) we do the average of 2 averages of 8
 				// Case of sampleLevel = 5 (32 samples) we do the average of 4 averages of 8
-				this.uniforms["sampleLevel"].value = Math.trunc(size/16);
+				this.quad.material = this.material[Math.trunc(size/16)];
 
 			} else {
-				this.uniforms[ "sampleLevel" ].value = this.changed ? sampleLevel : Math.trunc(Math.log2(size));
 
+				this.quad.material = this.material[this.changed ? sampleLevel : Math.trunc(Math.log2(size))]
 				// We do 1 average of 1, 2, 4 or 8 textures
 				for (var i = 0; i < Math.min(size,8) ; i++){
-					this.uniforms[ "texture"+ i ].value = this.renderTarget[i].texture;
+					this.texture[i] = this.renderTarget[i].texture;
 				}
+				this.uniforms[ "texture" ].value = this.texture;
 			}
 
 		}
@@ -300,16 +339,34 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 
 	render: function ( renderer , writeBuffer, readBuffer ) {
 
-		if ( this.sampleLevelMax < this.sampleLevelMin ) console.error( "SampleLevelMax must be higher than sampleLevelMin" );
-
 		var sampleLevel = -1;
 
-		var autochanged = false;
-		// Check if the scene has changed (array comparison)
+		if (this.autoCheckChange){
+			var autoChanged = false;
+			// Check if the scene has changed (array comparison)
+			newBuffer = new Uint8Array( readBuffer.width * readBuffer.height * 4);
+			renderer.readRenderTargetPixels( readBuffer, 0, 0, readBuffer.width, readBuffer.height, newBuffer);
+			if (!this.oldBuffer){
+				autoChanged = true;
+			} else {
+
+				for (var i = 0; i < newBuffer.length; i++){
+
+					if (newBuffer[i] !== this.oldBuffer[i]){
+						autoChanged = true;
+						break;
+					}
+				}
+
+			}
+
+			this.oldBuffer = newBuffer;
+			this.setChanged(autoChanged);
+		}
+
 		// TODO : check computing time readPixels + comparison
 
-
-		if (this.changed || autochanged){
+		if (this.changed){
 
 			// We render with a low sampleLevel
 		  sampleLevel = this.sampleLevelMin;
