@@ -24,43 +24,15 @@ THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 	this.texture = [];
 
-  var material1 = new THREE.ShaderMaterial( {
-
-    uniforms: this.uniforms,
-    vertexShader: shader.vertexShader,
-    fragmentShader: shader.fragmentShader,
-
-  } );
-	material1.defines[ 'NUMBER_TEXTURE' ] = 1.0;
-
-  var material2 = new THREE.ShaderMaterial( {
-
-    uniforms: this.uniforms,
-    vertexShader: shader.vertexShader,
-    fragmentShader: shader.fragmentShader,
-
-  } );
-	material2.defines[ 'NUMBER_TEXTURE' ] = 2.0;
-
-	var material4 = new THREE.ShaderMaterial( {
-
-		uniforms: this.uniforms,
-		vertexShader: shader.vertexShader,
-		fragmentShader: shader.fragmentShader,
-
-	} );
-	material4.defines[ 'NUMBER_TEXTURE' ] = 4.0;
-
-	var material8 = new THREE.ShaderMaterial( {
-
-		uniforms: this.uniforms,
-		vertexShader: shader.vertexShader,
-		fragmentShader: shader.fragmentShader,
-
-	} );
-	material8.defines[ 'NUMBER_TEXTURE' ] = 8.0;
-
-	this.material = [material1, material2, material4, material8];
+  this.material = [];
+	for (var i = 0; i<4; i++){
+		this.material[i] = new THREE.ShaderMaterial( {
+			uniforms: this.uniforms,
+			vertexShader: shader.vertexShader,
+			fragmentShader: shader.fragmentShader,
+		} );
+		this.material[i].defines[ 'NUMBER_TEXTURE' ] = Math.pow(2,i);
+	}
 
 	// Final Scene
 
@@ -223,9 +195,9 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
       var width = readBuffer.width;
       var height = readBuffer.height;
 
-      if ( ! this.renderTarget[i + beginning] ) {
-        this.renderTarget.push(
-					new THREE.WebGLRenderTarget(
+      if ( ! this.renderTarget[ i + beginning ] ) {
+        this.renderTarget[ i + beginning ] =
+				new THREE.WebGLRenderTarget(
 						width,
 						height,
 						{
@@ -233,11 +205,11 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 							magFilter: THREE.NearestFilter,
 							format: THREE.RGBFormat
 						}
-					)
-				);
+					);
       }
+			var offset = !this.changed ? this.nextRenderIndex : this.nextRenderMeanIndex*8;
 
-      var jitterOffset = this.jitterOffsets[ this.nextRenderIndex + i ]; // this.nextRenderIndex = beginning = 0 for levels < 4
+      var jitterOffset = this.jitterOffsets[ offset + i ]; // this.nextRenderIndex = beginning = 0 for levels < 4
       if ( this.camera.setViewOffset ) {
         this.camera.setViewOffset( width, height,
           jitterOffset[ 0 ] * 0.0625, jitterOffset[ 1 ] * 0.0625,   // 0.0625 = 1 / 16
@@ -282,18 +254,15 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 				if (size%8 === 0){
 
 					if (!this.renderTargetMean[this.nextRenderMeanIndex]) {
-						this.renderTargetMean.push(
-							new THREE.WebGLRenderTarget(
-								readBuffer.width,
-								readBuffer.height,
-								{
-									minFilter: THREE.LinearFilter,
-									magFilter: THREE.NearestFilter,
-									format: THREE.RGBFormat
-								}
-							)
+						this.renderTargetMean[this.nextRenderMeanIndex] = new THREE.WebGLRenderTarget(
+							readBuffer.width,
+							readBuffer.height,
+							{
+								minFilter: THREE.LinearFilter,
+								magFilter: THREE.NearestFilter,
+								format: THREE.RGBFormat
+							}
 						);
-
 					}
 
 					// We use 8 renderTargets per shader to do the average
@@ -341,6 +310,12 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 
 		var sampleLevel = -1;
 
+		var autoClear = renderer.autoClear;
+		renderer.autoClear = true;
+
+		var oldClearColor = renderer.getClearColor().getHex();
+		var oldClearAlpha = renderer.getClearAlpha();
+
 		if (this.autoCheckChange){
 			var autoChanged = false;
 			// Check if the scene has changed (array comparison)
@@ -363,8 +338,6 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			this.oldBuffer = newBuffer;
 			this.setChanged(autoChanged);
 		}
-
-		// TODO : check computing time readPixels + comparison
 
 		if (this.changed){
 
@@ -405,13 +378,14 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 				console.error("In next versions of threejs :\n renderer.setRenderTarget( writeBuffer ); \n if ( this.clear ) renderer.clear();\n this.quad.render( renderer );");
 			}
 
-			if ( this.clear ) renderer.clear();
 			renderer.render( this.sceneQuad, this.cameraQuad , writeBuffer);
 
 		}
 
 		if ( this.camera.clearViewOffset ) this.camera.clearViewOffset();
 
+		renderer.autoClear = autoClear;
+		renderer.setClearColor( oldClearColor, oldClearAlpha );
 	}
 
 } );

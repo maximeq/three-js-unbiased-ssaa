@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - postprocessing manual taa and ssaa</title>
+		<title>three.js webgl - postprocessing ssaa</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
 	</head>
 	<body>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Temporal Anti-Aliasing (TAA) pass by <a href="https://clara.io" target="_blank" rel="noopener">Ben Houston</a><br/><br/>
+			Temporal Anti-Aliasing (TAA) pass by Dioxygen</a><br/><br/>
 			When there is no motion in the scene, the SSAAMeanPass compute the renderers<br/>
 			needed to create a high quality anti-aliased result.<br/><br/>
 
@@ -28,8 +28,8 @@
 
 		<script>
 
-			var camera, scene, renderer, composer, copyPass, taaRenderPass, renderPass;
-			var gui, stats;
+			var camera, scene, renderer, composer, copyPass, renderPass, meanPass;
+			var gui;
 			var index = 0;
 
 			init();
@@ -130,19 +130,9 @@
 
 			function animate() {
 
-        var delayInMilliseconds = 0; //1 second
-        if (meanPass.changed === false && meanPass.finalRenderDone===false){
-          setTimeout(function() {
-            requestAnimationFrame( animate );
-            //your code to be executed after 1 second
-          }, delayInMilliseconds);
-
-        } else {
-          requestAnimationFrame( animate );
-        }
+        requestAnimationFrame( animate );
 
 				index ++;
-
 
         meanPass.setSampleLevelMax(params.sampleLevelMax);
         meanPass.setSampleLevelMin(params.sampleLevelMin);
@@ -158,10 +148,10 @@
 						child.rotation.y += 0.01;
 
 					}
-					if ( meanPass ) meanPass.setChanged(true);
+					meanPass.setChanged(true);
 
 				} else {
-					if ( meanPass ) meanPass.setChanged(false);
+					meanPass.setChanged(false);
 
 				}
 

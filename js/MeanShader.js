@@ -4,8 +4,6 @@ THREE.MeanShader = {
     },
 
     uniforms: {
-      // Texture from the previous shader
-      "sampleLevel": {value: 0},
       "texture": {value: null}
     },
 

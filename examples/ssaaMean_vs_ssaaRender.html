@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js WebGL  - postprocessing - FXAA</title>
+		<title>three.js WebGL  - Comparison - SSAA</title>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -15,7 +15,7 @@
 			}
 			#container {
 				position: absolute;
-				top: 80px;
+				top: 100px;
 				width: 100%;
 				bottom: 0px;
 			}
@@ -25,9 +25,10 @@
 	<body>
 
 		<div id="info">
-			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - postprocessing - SSAAMean  - SSAARender<br />
-			Left scene processed with SSAAMean (changed = true), right scene is rendered with SSAARender (unbiased = true).
-			The Shadow texture is parasitized with circles when the SSAARender is on.
+			Postprocessing - SSAAMean  - SSAARender<br />
+			Left scene is processed with SSAAMean (autoCheckChange = true), right scene is processed with SSAARender (unbiased = true).
+			SampleLevelMax of SSAAMean = SampleLevel of SSAARender.
+			The texture of the gun changes and the texture shaded is parasitized with circles when the SSAARender is on.
 		</div>
 		<div id="container">
 		</div>
@@ -43,17 +44,13 @@
 
 		<script>
 
-			var camera, scene, renderer, clock, group;
+			var camera, scene, renderer, group;
 			var composer1, composer2, ssaaRenderPass, meanPass;
 
       var params = {
-        sampleLevel: 3,
-        renderToScreen: false,
-        unbiased: true,
-        camera: 'perspective',
-        clearColor: 'black',
-        clearAlpha: 1.0,
-        autoRotate: true
+        sampleLevelMax: 3,
+				sampleLevelMin: 0,
+				unbiased: true
       };
 			var compt = 0;
 
@@ -67,9 +64,14 @@
 				camera.position.z = 2;
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xffffff );
-				scene.fog = new THREE.Fog( 0xcccccc, 100, 1500 );
-				clock = new THREE.Clock();
+
+				//
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.autoClear = false;
+				renderer.setSize( container.offsetWidth, container.offsetHeight );
+				container.appendChild( renderer.domElement );
+
 				//
         var light = new THREE.PointLight( 0xddffdd, 1.0 );
 				light.position.z = 70;
@@ -143,36 +145,41 @@
 				plane.position.y=-0.1;
 				scene.add( plane );
 
+				controls = new THREE.TrackballControls( camera, renderer.domElement );
+
+				controls.rotateSpeed = 5.0;
+				controls.zoomSpeed = 1.2;
+				controls.panSpeed = 0.8;
+				controls.noZoom = false;
+				controls.noPan = false;
+				controls.staticMoving = true;
+				controls.dynamicDampingFactor = 3;
+				controls.keys = [ 65, 83, 68 ];
+
 				//
-				renderer = new THREE.WebGLRenderer();
-				renderer.autoClear = false;
-				//renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( container.offsetWidth, container.offsetHeight );
-				container.appendChild( renderer.domElement );
-				//
-				var renderPass = new THREE.RenderPass( scene, camera );
-				//
-				meanPass = new THREE.SSAAMeanPass(scene, camera);
 				composer1 = new THREE.EffectComposer( renderer );
+
+				var renderPass = new THREE.RenderPass( scene, camera );
 				composer1.addPass( renderPass );
+
+				meanPass = new THREE.SSAAMeanPass(scene, camera);
 				meanPass.renderToScreen = true;
-				meanPass.setChanged(true);
+				meanPass.setAutoCheckChange(true);
 				composer1.addPass( meanPass );
 
 
-				var copyPass = new THREE.ShaderPass( THREE.CopyShader );
 				composer2 = new THREE.EffectComposer( renderer );
-        ssaaRenderPass = new THREE.SSAARenderPass( scene, camera );
-				copyPass.renderToScreen = true;
 				composer2.addPass( renderPass );
+				ssaaRenderPass = new THREE.SSAARenderPass( scene, camera );
 				composer2.addPass(ssaaRenderPass);
+				var copyPass = new THREE.ShaderPass( THREE.CopyShader );
 				copyPass.renderToScreen = true;
 				composer2.addPass( copyPass );
-	0			//
+				//
 				window.addEventListener( 'resize', onWindowResize, false );
 
 				gui = new dat.GUI();
-				gui.add( params, 'sampleLevel', {
+				gui.add( params, 'sampleLevelMax', {
 					'Level -1: 1 Sample': -1,
 					'Level 0: 1 Sample': 0,
 					'Level 1: 2 Samples': 1,
@@ -181,33 +188,51 @@
 					'Level 4: 16 Samples': 4,
 					'Level 5: 32 Samples': 5
 				} );
+				gui.add( params, 'sampleLevelMin', {
+					'Level -1: 1 Sample': -1,
+					'Level 0: 1 Sample': 0,
+					'Level 1: 2 Samples': 1,
+					'Level 2: 4 Samples': 2,
+					'Level 3: 8 Samples': 3,
+					'Level 4: 16 Samples': 4,
+					'Level 5: 32 Samples': 5
+				} );
+				gui.add( params, 'unbiased' );
+
+				render();
+
 			}
+
 			function onWindowResize() {
 				camera.aspect = ( container.offsetWidth * 0.5 ) / container.offsetHeight;
 				camera.updateProjectionMatrix();
 				renderer.setSize( container.offsetWidth, container.offsetHeight );
 				composer1.setSize( container.offsetWidth, container.offsetHeight );
 				composer2.setSize( container.offsetWidth, container.offsetHeight );
-				var pixelRatio = renderer.getPixelRatio();
-				// fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
-				// fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
+				controls.handleResize();
 			}
-			function animate() {
-				meanPass.setSampleLevelMin(params.sampleLevel);
-				ssaaRenderPass.sampleLevel = params.sampleLevel;
 
+			function animate() {
 				requestAnimationFrame( animate );
 
-				var halfWidth = container.offsetWidth / 2;
-				ssaaRenderPass.sampleLevel = params.sampleLevel;
+
+				controls.update();
+				render();
+
+			}
+
+			function render(){
+
+				meanPass.setSampleLevelMax(params.sampleLevelMax);
+				meanPass.setSampleLevelMin(params.sampleLevelMin);
+				ssaaRenderPass.sampleLevel = params.sampleLevelMax;
 				ssaaRenderPass.unbiased = params.unbiased;
 
-				//group.rotation.y += clock.getDelta() * 0.1;
+				var halfWidth = container.offsetWidth / 2;
 				renderer.setViewport( 0, 0, halfWidth, container.offsetHeight );
 				composer1.render();
 				renderer.setViewport( halfWidth, 0, halfWidth, container.offsetHeight );
-				composer2.render(scene, camera);
-
+				composer2.render();
 			}
 		</script>
 	</body>
