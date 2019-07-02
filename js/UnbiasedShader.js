@@ -1,4 +1,4 @@
-THREE.MeanShader = {
+THREE.UnbiasedShader = {
     defines: {
       'NUMBER_TEXTURE': 0.0
     },

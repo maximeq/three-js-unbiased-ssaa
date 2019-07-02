@@ -1,5 +1,5 @@
 
-THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
+THREE.SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 
 	THREE.Pass.call( this );
 
@@ -17,9 +17,9 @@ THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 	// Sample level used on motionless scene
   this.sampleLevelMax = sampleLevelMax !== undefined ? sampleLevelMax : 5;
 
-  if ( THREE.MeanShader === undefined ) console.error( "THREE.SSAAMeanPass relies on THREE.MeanShader" );
+  if ( THREE.UnbiasedShader === undefined ) console.error( "THREE.SSAAUnbiasedPass relies on THREE.UnbiasedShader" );
 
-	var shader = THREE.MeanShader;
+	var shader = THREE.UnbiasedShader;
 
 	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 	this.texture = [];
@@ -53,39 +53,39 @@ THREE.SSAAMeanPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 	// Index of the last computed renderer on a motionless scene
 	this.nextRenderIndex = 0;
 
-	this.uniformsMean = THREE.UniformsUtils.clone( shader.uniforms );
-	this.textureMean = [];
-	this.materialMean = new THREE.ShaderMaterial( {
-		uniforms: this.uniformsMean,
+	this.uniformsUnbiased = THREE.UniformsUtils.clone( shader.uniforms );
+	this.textureUnbiased = [];
+	this.materialUnbiased = new THREE.ShaderMaterial( {
+		uniforms: this.uniformsUnbiased,
 		vertexShader: shader.vertexShader,
 		fragmentShader: shader.fragmentShader
 
 	} );
-	this.materialMean.defines[ 'NUMBER_TEXTURE' ] = 8.0;
+	this.materialUnbiased.defines[ 'NUMBER_TEXTURE' ] = 8.0;
 
 	if (THREE.REVISION !== "101"){
-		console.error("In next versions of threejs line 67 to 73:\n this.quadMean = new THREE.Pass.FullScreenQuad( this.materialMean );");
+		console.error("In next versions of threejs line 67 to 73:\n this.quadUnbiased = new THREE.Pass.FullScreenQuad( this.materialUnbiased );");
 	}
 
-	this.sceneQuadMean = new THREE.Scene();
+	this.sceneQuadUnbiased = new THREE.Scene();
 
-	this.quadMean = new THREE.Mesh(
+	this.quadUnbiased = new THREE.Mesh(
 		new THREE.PlaneBufferGeometry( 2, 2 ),
-		this.materialMean
+		this.materialUnbiased
 	);
-	this.quadMean.frustumCulled = false; // Avoid getting clipped
-	this.sceneQuadMean.add( this.quadMean );
+	this.quadUnbiased.frustumCulled = false; // Avoid getting clipped
+	this.sceneQuadUnbiased.add( this.quadUnbiased );
 
 	// RenderTargets 1 and 2 for the cases with sample > 3
 	// RenderTargets 1 to 4 for the cases with sample > 4
-	this.renderTargetMean = [];
-	this.nextRenderMeanIndex = 0;
+	this.renderTargetUnbiased = [];
+	this.nextRenderUnbiasedIndex = 0;
 
 };
 
-THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+THREE.SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
 
-	constructor: THREE.SSAAMeanPass,
+	constructor: THREE.SSAAUnbiasedPass,
 
 	dispose: function () {
 
@@ -102,12 +102,12 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 		  }
     }
 
-		for (var i = 0; i < this.renderTargetMean.length; i++){
+		for (var i = 0; i < this.renderTargetUnbiased.length; i++){
 
-			if ( this.renderTargetMean[i] ){
+			if ( this.renderTargetUnbiased[i] ){
 
-				this.renderTargetMean[i].dispose();
-				this.renderTargetMean[i] = null;
+				this.renderTargetUnbiased[i].dispose();
+				this.renderTargetUnbiased[i] = null;
 
 			}
 
@@ -116,10 +116,10 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 		this.sceneQuad.dispose();
 
 		for (var i = 0 ; i < 4 ; i++){
-			this.sceneQuadMean[i].dispose();
+			this.sceneQuadUnbiased[i].dispose();
 		}
 
-		this.materialMean.dispose();
+		this.materialUnbiased.dispose();
 
 	},
 
@@ -128,7 +128,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			this.camera = camera;
 			this.finalRenderDone = false;
 			this.nextRenderIndex = 0;
-			this.nextRenderMeanIndex = 0;
+			this.nextRenderUnbiasedIndex = 0;
 		}
 	},
 
@@ -137,7 +137,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			this.scene = scene;
 			this.finalRenderDone = false;
 			this.nextRenderIndex = 0;
-			this.nextRenderMeanIndex = 0;
+			this.nextRenderUnbiasedIndex = 0;
 		}
 	},
 
@@ -146,7 +146,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			this.sampleLevelMax = sampleLevelMax;
 			this.finalRenderDone = false;
 			this.nextRenderIndex = 0;
-			this.nextRenderMeanIndex = 0;
+			this.nextRenderUnbiasedIndex = 0;
 		}
 		if ( this.sampleLevelMax < this.sampleLevelMin ) console.error( "SampleLevelMax must be higher than sampleLevelMin" );
 	},
@@ -162,7 +162,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			this.finalRenderDone = false;
 			// If the scene moves before the end of the max computation
 			this.nextRenderIndex = 0;
-			this.nextRenderMeanIndex = 0;
+			this.nextRenderUnbiasedIndex = 0;
 		}
 	},
 
@@ -177,8 +177,8 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 				this.renderTarget[i].setSize( width, height );
 			}
 
-			if ( this.renderTargetMean[i] ){
-				this.renderTargetMean[i].setSize( width, height );
+			if ( this.renderTargetUnbiased[i] ){
+				this.renderTargetUnbiased[i].setSize( width, height );
 			}
 		}
 	},
@@ -207,7 +207,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 						}
 					);
       }
-			var offset = !this.changed ? this.nextRenderIndex : this.nextRenderMeanIndex*8;
+			var offset = !this.changed ? this.nextRenderIndex : this.nextRenderUnbiasedIndex*8;
 
       var jitterOffset = this.jitterOffsets[ offset + i ]; // this.nextRenderIndex = beginning = 0 for levels < 4
       if ( this.camera.setViewOffset ) {
@@ -233,10 +233,10 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 
   },
 
-	meanCalculation: function (renderer, writeBuffer, readBuffer, sampleLevel){
+	UnbiasedCalculation: function (renderer, writeBuffer, readBuffer, sampleLevel){
 
 		// Retrieve the matrix of the coordinates of the corresponding sampleLevel
-		this.jitterOffsets = THREE.SSAAMeanPass.JitterVectors[ Math.max( 0, Math.min( sampleLevel, 5 ) ) ];
+		this.jitterOffsets = THREE.SSAAUnbiasedPass.JitterVectors[ Math.max( 0, Math.min( sampleLevel, 5 ) ) ];
 
 		var nbrRenderToDo = this.changed ? this.jitterOffsets.length : Math.pow( 2, this.sampleLevelMin );
 
@@ -253,8 +253,8 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 
 				if (size%8 === 0){
 
-					if (!this.renderTargetMean[this.nextRenderMeanIndex]) {
-						this.renderTargetMean[this.nextRenderMeanIndex] = new THREE.WebGLRenderTarget(
+					if (!this.renderTargetUnbiased[this.nextRenderUnbiasedIndex]) {
+						this.renderTargetUnbiased[this.nextRenderUnbiasedIndex] = new THREE.WebGLRenderTarget(
 							readBuffer.width,
 							readBuffer.height,
 							{
@@ -267,25 +267,25 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 
 					// We use 8 renderTargets per shader to do the average
 					for (var i = 0; i < 8 ; i++){
-						this.textureMean[i] = this.renderTarget[i].texture;
+						this.textureUnbiased[i] = this.renderTarget[i].texture;
 					}
-					this.uniformsMean[ "texture" ].value = this.textureMean;
+					this.uniformsUnbiased[ "texture" ].value = this.textureUnbiased;
 
 					if (THREE.REVISION !== "101"){
-						console.error("In next versions of threejs :\n render.setRenderTarget( [this.nextRenderMeanIndex] ); \n this.quadMean( renderer );");
+						console.error("In next versions of threejs :\n render.setRenderTarget( [this.nextRenderUnbiasedIndex] ); \n this.quadUnbiased( renderer );");
 					}
 
 					renderer.render(
-						this.sceneQuadMean,
+						this.sceneQuadUnbiased,
 						this.cameraQuad,
-						this.renderTargetMean[this.nextRenderMeanIndex]
+						this.renderTargetUnbiased[this.nextRenderUnbiasedIndex]
 					);
 
-					this.texture[this.nextRenderMeanIndex] = this.renderTargetMean[this.nextRenderMeanIndex].texture;
+					this.texture[this.nextRenderUnbiasedIndex] = this.renderTargetUnbiased[this.nextRenderUnbiasedIndex].texture;
 					this.uniforms["texture"].value = this.texture;
 
 
-					this.nextRenderMeanIndex ++;
+					this.nextRenderUnbiasedIndex ++;
 
 				}
 				// Case of sampleLevel = 4 (16 samples) we do the average of 2 averages of 8
@@ -344,7 +344,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 			// We render with a low sampleLevel
 		  sampleLevel = this.sampleLevelMin;
 			this.finalRenderDone = false;
-			this.nextRenderMeanIndex = 0;
+			this.nextRenderUnbiasedIndex = 0;
 
 		} else {
 
@@ -356,7 +356,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 		// Case of the scene moving and the first motionless renderers
 		if (!this.finalRenderDone){
 
-			this.meanCalculation( renderer, writeBuffer, readBuffer, sampleLevel);
+			this.UnbiasedCalculation( renderer, writeBuffer, readBuffer, sampleLevel);
 			if (this.nextRenderIndex === Math.pow(2, this.sampleLevelMax)){
 				this.finalRenderDone = true;
 			}
@@ -395,7 +395,7 @@ THREE.SSAAMeanPass.prototype = Object.assign( Object.create( THREE.Pass.prototyp
 // before being used, thus these integers need to be scaled by 1/16.
 //
 // Sample patterns reference: https://msdn.microsoft.com/en-us/library/windows/desktop/ff476218%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396
-THREE.SSAAMeanPass.JitterVectors = [
+THREE.SSAAUnbiasedPass.JitterVectors = [
 	[
 		[ 0, 0 ]
 	],
