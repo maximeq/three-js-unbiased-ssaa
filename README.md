@@ -12,4 +12,4 @@ It also provides the possibility to adapt the level of render according to the m
 
 * **Manon Sutter** - *Engineering and implementation* - [ManonSutter](https://github.com/ManonSutter)
 * **Maxime Quiblier** - *Idea, Architecture and API* - [maximeq](https://github.com/maximeq)
-* **Dualbox** - *Sponsoring* - [maximeq](https://www.dualbox.com)
+* **Dualbox** - *Sponsoring* - [www.dualbox.com](https://www.dualbox.com)
