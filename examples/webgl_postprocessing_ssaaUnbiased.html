@@ -1,98 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>three.js webgl - postprocessing ssaa</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link type="text/css" rel="stylesheet" href="main.css">
-	</head>
-	<body>
-		<div id="info">
-			Temporal Anti-Aliasing (TAA) pass by Dioxygen</a><br/><br/>
-			When there is no motion in the scene, the SSAAUnbiasedPass compute the renderers<br/>
-			needed to create a high quality anti-aliased result.<br/><br/>
+    <head>
+        <title>three.js webgl - postprocessing ssaa</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link type="text/css" rel="stylesheet" href="main.css">
+    </head>
+    <body>
+        <div id="info">
+            Temporal Anti-Aliasing (TAA) pass by Dioxygen</a><br/><br/>
+            When there is no motion in the scene, the SSAAUnbiasedPass compute the renderers<br/>
+            needed to create a high quality anti-aliased result.<br/><br/>
 
-		</div>
+        </div>
 
-		<div id="container"></div>
+        <div id="container"></div>
 
     <script src="lib/Three.iife.js"></script>
-		<script>
-		var THREE = THREE || Three;
-		</script>
+        <script>
+        var THREE = THREE || Three;
+        </script>
 
-		<script src="../js/SSAAUnbiasedPass.js"></script>
-		<script src="../js/UnbiasedShader.js"></script>
-		<script src='../js/dat.gui.min.js'></script>
+        <script src="../js/SSAAUnbiasedPass.js"></script>
+        <script src="../js/UnbiasedShader.js"></script>
+        <script src='../js/dat.gui.min.js'></script>
 
 
-		<script>
+        <script>
 
-			var camera, scene, renderer, composer, copyPass, renderPass, unbiasedPass;
-			var gui;
-			var index = 0;
+            var camera, scene, renderer, composer, copyPass, renderPass, unbiasedPass;
+            var gui;
+            var index = 0;
 
-			init();
+            init();
       animate();
 
 
-			function init() {
+            function init() {
 
-				var container = document.getElementById( "container" );
+                var container = document.getElementById( "container" );
 
-				renderer = new THREE.WebGLRenderer();
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+                renderer = new THREE.WebGLRenderer();
+                renderer.setPixelRatio( window.devicePixelRatio );
+                renderer.setSize( window.innerWidth, window.innerHeight );
+                document.body.appendChild( renderer.domElement );
 
-				//
+                //
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.z = 300;
+                camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+                camera.position.z = 300;
 
-				scene = new THREE.Scene();
+                scene = new THREE.Scene();
 
-				var geometry = new THREE.BoxBufferGeometry( 120, 120, 120 );
-				var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
+                var geometry = new THREE.BoxBufferGeometry( 120, 120, 120 );
+                var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
 
-				var mesh = new THREE.Mesh( geometry, material );
-				mesh.position.x = - 100;
-				scene.add( mesh );
+                var mesh = new THREE.Mesh( geometry, material );
+                mesh.position.x = - 100;
+                scene.add( mesh );
 
-				var texture = new THREE.TextureLoader().load( "textures/brick_diffuse.jpg" );
-				texture.minFilter = THREE.NearestFilter;
-				texture.magFilter = THREE.NearestFilter;
-				texture.anisotropy = 1;
-				texture.generateMipmaps = false;
+                var texture = new THREE.TextureLoader().load( "textures/brick_diffuse.jpg" );
+                texture.minFilter = THREE.NearestFilter;
+                texture.magFilter = THREE.NearestFilter;
+                texture.anisotropy = 1;
+                texture.generateMipmaps = false;
 
-				var material = new THREE.MeshBasicMaterial( { map: texture } );
+                var material = new THREE.MeshBasicMaterial( { map: texture } );
 
-				var mesh = new THREE.Mesh( geometry, material );
-				mesh.position.x = 100;
-				scene.add( mesh );
+                var mesh = new THREE.Mesh( geometry, material );
+                mesh.position.x = 100;
+                scene.add( mesh );
 
-				// postprocessing
+                // postprocessing
 
-				composer = new THREE.EffectComposer( renderer );
+                composer = new THREE.EffectComposer( renderer );
 
-				unbiasedPass = new THREE.SSAAUnbiasedPass( scene, camera );
-				composer.addPass( unbiasedPass );
+                unbiasedPass = new THREE.SSAAUnbiasedPass( scene, camera );
+                composer.addPass( unbiasedPass );
 
-				renderPass = new THREE.RenderPass( scene, camera );
-				renderPass.enabled = false;
-				composer.addPass( renderPass );
+                renderPass = new THREE.RenderPass( scene, camera );
+                renderPass.enabled = false;
+                composer.addPass( renderPass );
 
-				copyPass = new THREE.ShaderPass( THREE.CopyShader );
+                copyPass = new THREE.ShaderPass( THREE.CopyShader );
         copyPass.renderToScreen = true;
-				composer.addPass( copyPass );
+                composer.addPass( copyPass );
 
-				window.addEventListener( 'resize', onWindowResize, false );
+                window.addEventListener( 'resize', onWindowResize, false );
 
         params = {
-					postprocessing: true,
-					sampleLevelMax: 5,
-					sampleLevelMin: 0
-				};
+                    postprocessing: true,
+                    sampleLevelMax: 5,
+                    sampleLevelMin: 0
+                };
 
         gui = new dat.GUI();
         gui.add( params, 'postprocessing' );
@@ -113,47 +113,47 @@
           'Level 4: 16 Samples': 4,
           'Level 5: 32 Samples': 5
         } );
-			}
+            }
 
-			function onWindowResize() {
+            function onWindowResize() {
 
-				var width = window.innerWidth;
-				var height = window.innerHeight;
+                var width = window.innerWidth;
+                var height = window.innerHeight;
 
-				camera.aspect = width / height;
-				camera.updateProjectionMatrix();
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
 
-				renderer.setSize( width, height );
-				composer.setSize( width, height );
+                renderer.setSize( width, height );
+                composer.setSize( width, height );
 
-			}
+            }
 
-			function animate() {
+            function animate() {
 
         requestAnimationFrame( animate );
 
-				index ++;
+                index ++;
 
         unbiasedPass.setSampleLevelMax(params.sampleLevelMax);
         unbiasedPass.setSampleLevelMin(params.sampleLevelMin);
 
 
-				if ( Math.round( index / 200 ) % 2 === 0 ) {
+                if ( Math.round( index / 200 ) % 2 === 0 ) {
 
-					for ( var i = 0; i < scene.children.length; i ++ ) {
+                    for ( var i = 0; i < scene.children.length; i ++ ) {
 
-						var child = scene.children[ i ];
+                        var child = scene.children[ i ];
 
-						child.rotation.x += 0.005;
-						child.rotation.y += 0.01;
+                        child.rotation.x += 0.005;
+                        child.rotation.y += 0.01;
 
-					}
-					unbiasedPass.setChanged(true);
+                    }
+                    unbiasedPass.setChanged(true);
 
-				} else {
-					unbiasedPass.setChanged(false);
+                } else {
+                    unbiasedPass.setChanged(false);
 
-				}
+                }
 
         if ( params.postprocessing){
           composer.render();
@@ -161,8 +161,8 @@
           renderer.render( scene, camera );
         }
 
-			}
+            }
 
-		</script>
-	</body>
+        </script>
+    </body>
 </html>
