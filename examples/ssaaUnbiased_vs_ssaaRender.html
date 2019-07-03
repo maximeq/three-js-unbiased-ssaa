@@ -26,9 +26,11 @@
 
         <div id="info">
             Postprocessing - SSAAUnbiased  - SSAARender<br />
-            Left scene is processed with SSAAUnbiased (autoCheckChange = true), right scene is processed with SSAARender (unbiased = true).
+            Left scene is processed with SSAAUnbiased, right scene is processed with SSAARender (unbiased = true).
             SampleLevelMax of SSAAUnbiased = SampleLevel of SSAARender.
-            The texture of the gun changes and the texture shaded is parasitized with circles when the SSAARender is on.
+
+            The texture of the gun changes slightly.
+            SSAAUnbiased was made to remove the threshold artefacts visible when using SSAARender with unbiased option, as seen on the shadow texture.
         </div>
         <div id="container">
         </div>

@@ -1,3 +1,9 @@
+/**
+ * @author Manon Sutter / https://github.com/ManonSutter
+ * @author Maxime Quiblier / https://github.com/maximeq
+ * @author Dualbox / www.dualbox.com
+ */
+
 THREE.UnbiasedShader = {
     defines: {
         'NUMBER_TEXTURE': 0.0

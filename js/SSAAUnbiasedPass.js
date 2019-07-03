@@ -1,3 +1,8 @@
+/**
+ * @author Manon Sutter / https://github.com/ManonSutter
+ * @author Maxime Quiblier / https://github.com/maximeq
+ * @author Dualbox / www.dualbox.com
+ */
 
 THREE.SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 
