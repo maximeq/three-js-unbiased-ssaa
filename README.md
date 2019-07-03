@@ -22,6 +22,10 @@ The algorithm is based on the algorithm of THREE.SSAARenderPass. The difference 
 It also provides the possibility to adapt the level of render according to the motion of the scene, as the THREE.TAARenderPass does.
 The attribute `changed` allows to control it manually, while the pass can automatically detect the movement of the scene when the attribute `autoCheckChange` is set to true.
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+
 ## Authors
 
 * **Manon Sutter** - *Engineering and implementation* - [ManonSutter](https://github.com/ManonSutter)
