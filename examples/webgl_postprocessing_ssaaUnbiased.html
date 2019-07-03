@@ -16,29 +16,33 @@
 
         <div id="container"></div>
 
-    <script src="lib/Three.iife.js"></script>
+        <script src="lib/Three.iife.js"></script>
         <script>
         var THREE = THREE || Three;
         </script>
 
         <script src="../js/SSAAUnbiasedPass.js"></script>
         <script src="../js/UnbiasedShader.js"></script>
-        <script src='../js/dat.gui.min.js'></script>
+        <script src='lib/dat.gui.min.js'></script>
+				<script src="lib/stats.min.js"></script>
 
 
         <script>
 
-            var camera, scene, renderer, composer, copyPass, renderPass, unbiasedPass;
-            var gui;
+            var camera, scene, renderer, composer, renderPass, unbiasedPass;
+            var gui, stats;
             var index = 0;
 
             init();
-      animate();
+            animate();
 
 
             function init() {
 
                 var container = document.getElementById( "container" );
+
+								stats = new Stats();
+								container.appendChild( stats.dom );
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setPixelRatio( window.devicePixelRatio );
@@ -75,44 +79,42 @@
 
                 composer = new THREE.EffectComposer( renderer );
 
-                unbiasedPass = new THREE.SSAAUnbiasedPass( scene, camera );
-                composer.addPass( unbiasedPass );
-
-                renderPass = new THREE.RenderPass( scene, camera );
-                renderPass.enabled = false;
+                var renderPass = new THREE.RenderPass( scene, camera );
                 composer.addPass( renderPass );
 
-                copyPass = new THREE.ShaderPass( THREE.CopyShader );
-        copyPass.renderToScreen = true;
-                composer.addPass( copyPass );
+                unbiasedPass = new THREE.SSAAUnbiasedPass( scene, camera );
+                composer.addPass(unbiasedPass );
+                unbiasedPass.renderToScreen = true;
 
                 window.addEventListener( 'resize', onWindowResize, false );
 
-        params = {
+                params = {
                     postprocessing: true,
+										checkChanges: true,
                     sampleLevelMax: 5,
                     sampleLevelMin: 0
                 };
 
-        gui = new dat.GUI();
-        gui.add( params, 'postprocessing' );
-        gui.add( params, 'sampleLevelMax', {
-          'Level 0: 1 Sample': 0,
-          'Level 1: 2 Samples': 1,
-          'Level 2: 4 Samples': 2,
-          'Level 3: 8 Samples': 3,
-          'Level 4: 16 Samples': 4,
-          'Level 5: 32 Samples': 5
-        } );
+                gui = new dat.GUI();
+                gui.add( params, 'postprocessing' );
+				        gui.add( params, 'checkChanges' );
+                gui.add( params, 'sampleLevelMax', {
+                    'Level 0: 1 Sample': 0,
+                    'Level 1: 2 Samples': 1,
+                    'Level 2: 4 Samples': 2,
+                    'Level 3: 8 Samples': 3,
+                    'Level 4: 16 Samples': 4,
+                    'Level 5: 32 Samples': 5
+                } );
 
-        gui.add( params, 'sampleLevelMin', {
-          'Level 0: 1 Sample': 0,
-          'Level 1: 2 Samples': 1,
-          'Level 2: 4 Samples': 2,
-          'Level 3: 8 Samples': 3,
-          'Level 4: 16 Samples': 4,
-          'Level 5: 32 Samples': 5
-        } );
+                gui.add( params, 'sampleLevelMin', {
+                  'Level 0: 1 Sample': 0,
+                  'Level 1: 2 Samples': 1,
+                  'Level 2: 4 Samples': 2,
+                  'Level 3: 8 Samples': 3,
+                  'Level 4: 16 Samples': 4,
+                  'Level 5: 32 Samples': 5
+                } );
             }
 
             function onWindowResize() {
@@ -130,13 +132,14 @@
 
             function animate() {
 
-        requestAnimationFrame( animate );
+                requestAnimationFrame( animate );
+                stats.update();
 
                 index ++;
 
-        unbiasedPass.setSampleLevelMax(params.sampleLevelMax);
-        unbiasedPass.setSampleLevelMin(params.sampleLevelMin);
-
+                unbiasedPass.setSampleLevelMax(params.sampleLevelMax);
+                unbiasedPass.setSampleLevelMin(params.sampleLevelMin);
+								unbiasedPass.setAutoCheckChange(params.checkChanges);
 
                 if ( Math.round( index / 200 ) % 2 === 0 ) {
 
@@ -148,10 +151,10 @@
                         child.rotation.y += 0.01;
 
                     }
-                    unbiasedPass.setChanged(true);
+										if (!params.checkChanges) unbiasedPass.setChanged(true);
 
                 } else {
-                    unbiasedPass.setChanged(false);
+                    if (!params.checkChanges) unbiasedPass.setChanged(false);
 
                 }
 
