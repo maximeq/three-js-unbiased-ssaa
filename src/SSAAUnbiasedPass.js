@@ -16,6 +16,8 @@ var SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax)
     this.camera = camera;
 
     this.autoCheckChange = false;
+        this.newBuffer = null;
+        this.oldBuffer = null;
 
     this.changed = false;
     this.finalRenderDone = false;
@@ -191,6 +193,7 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                 this.renderTargetMean[i].setSize( width, height );
             }
         }
+        this.setChanged(true);
     },
 
     createRenderTarget: function ( renderer , writeBuffer , readBuffer , nbrRenderToDo){
@@ -327,25 +330,25 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
         var oldClearColor = renderer.getClearColor().getHex();
         var oldClearAlpha = renderer.getClearAlpha();
 
-        if (this.autoCheckChange){
+        // Only check if changed has not been set to true
+        if (!this.changed && this.autoCheckChange){
             var autoChanged = false;
             // Check if the scene has changed (array comparison)
-            var newBuffer = new Uint8Array( readBuffer.width * readBuffer.height * 4);
-            renderer.readRenderTargetPixels( readBuffer, 0, 0, readBuffer.width, readBuffer.height, newBuffer);
+            this.newBuffer = this.newBuffer ? this.newBuffer : new Uint8Array( readBuffer.width * readBuffer.height * 4);
+            renderer.readRenderTargetPixels( readBuffer, 0, 0, readBuffer.width, readBuffer.height, this.newBuffer);
             if (!this.oldBuffer){
                 autoChanged = true;
+                this.oldBuffer = this.newBuffer;
+                this.newBuffer = null;
             } else {
-
-                for (var i = 0; i < newBuffer.length; i++){
-                    if (newBuffer[i] !== this.oldBuffer[i]){
+                for (var i = 0; i < this.newBuffer.length; i++){
+                    if (this.newBuffer[i] !== this.oldBuffer[i]){
                         autoChanged = true;
                         break;
                     }
                 }
-
+                this.oldBuffer = this.newBuffer;
             }
-
-            this.oldBuffer = newBuffer;
             this.setChanged(autoChanged);
         }
 
