@@ -6,14 +6,14 @@ This development was sponsored by Dualbox (<https://www.dualbox.com/>).
 
 ## The issue
 
-Here is a shadow texture processed on the left by this unbiased ssaa, and on the right by the old one.
+Here is a shadow texture processed on the left by this unbiased ssaa, and on the right by the SSAA pass in THREE.JS examples before revision 101.
 
 ![unbiasedShadow](https://user-images.githubusercontent.com/51316383/60586238-f5baf580-9d91-11e9-901c-514d4cc2af7a.png)
 ![biasedShadow](https://user-images.githubusercontent.com/51316383/60586247-f8b5e600-9d91-11e9-8a57-be92694c6e52.png)
 
 
 ## THREE.JS Version
-The version used to implement this module is the THREE revision 101. Most of the lines to modify for a more recent version are specified by a console error in the concerned file.
+The version used to implement this module is the THREE revision 101. Most of the lines to modify for a more recent version are specified by a console error in the concerned file. It has not yet been done since at the time this readme is written the three-full last revision has an unacceptable bug which prevent us from using the last THREE.JS version.
 
 ## Concept
 
