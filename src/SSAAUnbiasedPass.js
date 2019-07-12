@@ -1,7 +1,7 @@
 
 const THREE = require("three-full");
 
-const UnbiasedShader = require("./UnbiasedShader");
+const UnbiasedShader = require("./SSAAUnbiasedShader");
 
 /**
  * @author Manon Sutter / https://github.com/ManonSutter

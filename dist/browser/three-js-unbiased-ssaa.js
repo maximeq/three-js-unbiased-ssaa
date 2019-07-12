@@ -47,7 +47,7 @@
         ].join("\n")
     };
 
-    var UnbiasedShader_1 = UnbiasedShader;
+    var SSAAUnbiasedShader = UnbiasedShader;
 
     /**
      * @author Manon Sutter / https://github.com/ManonSutter
@@ -72,9 +72,9 @@
         // Sample level used on motionless scene
         this.sampleLevelMax = sampleLevelMax !== undefined ? sampleLevelMax : 5;
 
-        if ( UnbiasedShader_1 === undefined ) console.error( "THREE.SSAAUnbiasedPass relies on UnbiasedShader" );
+        if ( SSAAUnbiasedShader === undefined ) console.error( "THREE.SSAAUnbiasedPass relies on UnbiasedShader" );
 
-        var shader = UnbiasedShader_1;
+        var shader = SSAAUnbiasedShader;
 
         this.uniforms = threeFull.UniformsUtils.clone( shader.uniforms );
         this.texture = [];
@@ -486,8 +486,14 @@
     var SSAAUnbiasedPass_1 = SSAAUnbiasedPass;
 
     threeFull.SSAAUnbiasedPass = SSAAUnbiasedPass_1;
+    threeFull.SSAAUnbiasedShader = SSAAUnbiasedShader;
 
-    var exports$1 = SSAAUnbiasedPass_1;
+    var SSAAUnbiased = {
+        SSAAUnbiasedPass:SSAAUnbiasedPass_1,
+        SSAAUnbiasedShader:SSAAUnbiasedShader
+    };
+
+    var exports$1 = SSAAUnbiased;
 
     return exports$1;
 
