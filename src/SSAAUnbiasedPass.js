@@ -1,10 +1,14 @@
+
+const THREE = require("three-full");
+
+const UnbiasedShader = require("./UnbiasedShader");
+
 /**
  * @author Manon Sutter / https://github.com/ManonSutter
  * @author Maxime Quiblier / https://github.com/maximeq
  * @author Dualbox / www.dualbox.com
  */
-
-THREE.SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
+var SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 
     THREE.Pass.call( this );
 
@@ -22,9 +26,9 @@ THREE.SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMa
     // Sample level used on motionless scene
     this.sampleLevelMax = sampleLevelMax !== undefined ? sampleLevelMax : 5;
 
-    if ( THREE.UnbiasedShader === undefined ) console.error( "THREE.SSAAUnbiasedPass relies on THREE.UnbiasedShader" );
+    if ( UnbiasedShader === undefined ) console.error( "THREE.SSAAUnbiasedPass relies on UnbiasedShader" );
 
-    var shader = THREE.UnbiasedShader;
+    var shader = UnbiasedShader;
 
     this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
     this.texture = [];
@@ -89,9 +93,9 @@ THREE.SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMa
 
 };
 
-THREE.SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
 
-    constructor: THREE.SSAAUnbiasedPass,
+    constructor: SSAAUnbiasedPass,
 
     dispose: function () {
 
@@ -326,7 +330,7 @@ THREE.SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prot
         if (this.autoCheckChange){
             var autoChanged = false;
             // Check if the scene has changed (array comparison)
-            newBuffer = new Uint8Array( readBuffer.width * readBuffer.height * 4);
+            var newBuffer = new Uint8Array( readBuffer.width * readBuffer.height * 4);
             renderer.readRenderTargetPixels( readBuffer, 0, 0, readBuffer.width, readBuffer.height, newBuffer);
             if (!this.oldBuffer){
                 autoChanged = true;
@@ -401,7 +405,7 @@ THREE.SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prot
 // before being used, thus these integers need to be scaled by 1/16.
 //
 // Sample patterns reference: https://msdn.microsoft.com/en-us/library/windows/desktop/ff476218%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396
-THREE.SSAAUnbiasedPass.JitterVectors = [
+SSAAUnbiasedPass.JitterVectors = [
     [
         [ 0, 0 ]
     ],
@@ -432,3 +436,5 @@ THREE.SSAAUnbiasedPass.JitterVectors = [
         [ 2, 5 ], [ 7, 5 ], [ 5, 6 ], [ 3, 7 ]
     ]
 ];
+
+module.exports = SSAAUnbiasedPass;

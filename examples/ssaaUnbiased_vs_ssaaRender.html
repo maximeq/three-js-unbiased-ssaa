@@ -35,14 +35,15 @@
         <div id="container">
         </div>
 
-        <script src="lib/Three.iife.js"></script>
+        <script src="../node_modules/three-full/builds/Three.iife.js"></script>
         <script>
-        var THREE = THREE || Three;
+            // Alias to use Three-full as Three
+            var THREE = THREE || Three;
         </script>
-
-        <script src="../js/SSAAUnbiasedPass.js"></script>
-        <script src="../js/UnbiasedShader.js"></script>
         <script src='lib/dat.gui.min.js'></script>
+        <script src="lib/stats.min.js"></script>
+
+        <script src="../dist/browser/three-js-unbiased-ssaa.js"></script>
 
         <script>
 

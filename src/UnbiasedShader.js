@@ -4,7 +4,7 @@
  * @author Dualbox / www.dualbox.com
  */
 
-THREE.UnbiasedShader = {
+var UnbiasedShader = {
     defines: {
         'NUMBER_TEXTURE': 0.0
     },
@@ -38,3 +38,5 @@ THREE.UnbiasedShader = {
         "}"
     ].join("\n")
 };
+
+module.exports = UnbiasedShader;
