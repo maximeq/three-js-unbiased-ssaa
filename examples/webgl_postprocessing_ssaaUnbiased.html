@@ -43,12 +43,10 @@
 								stats = new Stats();
 								container.appendChild( stats.dom );
 
-                renderer = new THREE.WebGLRenderer();
+                renderer = new THREE.WebGLRenderer({alpha:true});
                 renderer.setPixelRatio( window.devicePixelRatio );
                 renderer.setSize( window.innerWidth, window.innerHeight );
                 document.body.appendChild( renderer.domElement );
-
-                //
 
                 camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
                 camera.position.z = 300;
@@ -77,12 +75,16 @@
                 // postprocessing
 
                 composer = new THREE.EffectComposer( renderer );
+                composer.renderTarget1.format = THREE.RGBAFormat;
+                composer.renderTarget2.format = THREE.RGBAFormat;
 
                 var renderPass = new THREE.RenderPass( scene, camera );
                 composer.addPass( renderPass );
 
+                window.renderPass = renderPass;
+
                 unbiasedPass = new THREE.SSAAUnbiasedPass( scene, camera );
-                composer.addPass(unbiasedPass );
+                composer.addPass(unbiasedPass);
                 unbiasedPass.renderToScreen = true;
 
                 window.addEventListener( 'resize', onWindowResize, false );
@@ -91,7 +93,8 @@
                     postprocessing: true,
 										checkChanges: true,
                     sampleLevelMax: 5,
-                    sampleLevelMin: 0
+                    sampleLevelMin: 0,
+                    transparent:false
                 };
 
                 gui = new dat.GUI();
@@ -114,6 +117,7 @@
                   'Level 4: 16 Samples': 4,
                   'Level 5: 32 Samples': 5
                 } );
+                gui.add( params, 'transparent' );
             }
 
             function onWindowResize() {
@@ -139,6 +143,8 @@
                 unbiasedPass.setSampleLevelMax(params.sampleLevelMax);
                 unbiasedPass.setSampleLevelMin(params.sampleLevelMin);
 								unbiasedPass.setAutoCheckChange(params.checkChanges);
+
+                renderer.setClearAlpha(params.transparent ? 0 : 1);
 
                 if ( Math.round( index / 200 ) % 2 === 0 ) {
 

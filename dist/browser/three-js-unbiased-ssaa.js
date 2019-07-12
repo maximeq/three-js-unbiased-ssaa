@@ -259,7 +259,7 @@
                             {
                                 minFilter: threeFull.LinearFilter,
                                 magFilter: threeFull.NearestFilter,
-                                format: threeFull.RGBFormat
+                                format: threeFull.RGBAFormat
                             }
                         );
                 }
@@ -318,7 +318,7 @@
                                 {
                                     minFilter: threeFull.LinearFilter,
                                     magFilter: threeFull.NearestFilter,
-                                    format: threeFull.RGBFormat
+                                    format: threeFull.RGBAFormat
                                 }
                             );
                         }
