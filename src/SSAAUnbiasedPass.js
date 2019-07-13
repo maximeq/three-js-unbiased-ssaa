@@ -332,24 +332,24 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
 
         // Only check if changed has not been set to true
         if (!this.changed && this.autoCheckChange){
-            var autoChanged = false;
             // Check if the scene has changed (array comparison)
-            this.newBuffer = this.newBuffer ? this.newBuffer : new Uint8Array( readBuffer.width * readBuffer.height * 4);
+            this.newBuffer = this.newBuffer || new Uint8Array( readBuffer.width * readBuffer.height * 4);
             renderer.readRenderTargetPixels( readBuffer, 0, 0, readBuffer.width, readBuffer.height, this.newBuffer);
             if (!this.oldBuffer){
-                autoChanged = true;
+                this.setChanged(true);
                 this.oldBuffer = this.newBuffer;
                 this.newBuffer = null;
             } else {
                 for (var i = 0; i < this.newBuffer.length; i++){
                     if (this.newBuffer[i] !== this.oldBuffer[i]){
-                        autoChanged = true;
+                        this.setChanged(true);
                         break;
                     }
                 }
+                var swap = this.oldBuffer;
                 this.oldBuffer = this.newBuffer;
+                this.newBuffer = swap;
             }
-            this.setChanged(autoChanged);
         }
 
         if (this.changed){
@@ -399,6 +399,8 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
 
         renderer.autoClear = autoClear;
         renderer.setClearColor( oldClearColor, oldClearAlpha );
+
+        this.changed = false;
     }
 
 } );
