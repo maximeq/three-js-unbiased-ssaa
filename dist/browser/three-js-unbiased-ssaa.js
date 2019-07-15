@@ -214,9 +214,17 @@
             if ( this.sampleLevelMax < this.sampleLevelMin ) console.error( "SampleLevelMax must be higher than sampleLevelMin" );
         },
 
-        setChanged: function (changed){
-            if (this.changed != changed){
-                this.changed = changed;
+        /**
+         *  To be called when the scene has changed to ensure progressive anti-aliasing computation
+         *  will restart from the beginning.
+         *  If autoCheckChange is set to true, setting this flag is not necessary as a complete test
+         *  will be automatically made. However, manually setting this flag will skip the automatic test,
+         *  saving some performances.
+         *
+         */
+        hasChanged: function (){
+            if (!this.changed){
+                this.changed = true;
                 this.finalRenderDone = false;
                 // If the scene moves before the end of the max computation
                 this.nextRenderIndex = 0;
@@ -239,7 +247,7 @@
                     this.renderTargetMean[i].setSize( width, height );
                 }
             }
-            this.setChanged(true);
+            this.hasChanged();
         },
 
         createRenderTarget: function ( renderer , writeBuffer , readBuffer , nbrRenderToDo){
@@ -382,13 +390,13 @@
                 this.newBuffer = this.newBuffer || new Uint8Array( readBuffer.width * readBuffer.height * 4);
                 renderer.readRenderTargetPixels( readBuffer, 0, 0, readBuffer.width, readBuffer.height, this.newBuffer);
                 if (!this.oldBuffer){
-                    this.setChanged(true);
+                    this.hasChanged();
                     this.oldBuffer = this.newBuffer;
                     this.newBuffer = null;
                 } else {
                     for (var i = 0; i < this.newBuffer.length; i++){
                         if (this.newBuffer[i] !== this.oldBuffer[i]){
-                            this.setChanged(true);
+                            this.hasChanged();
                             break;
                         }
                     }

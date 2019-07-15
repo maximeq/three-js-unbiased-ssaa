@@ -156,18 +156,14 @@
                         child.rotation.y += 0.01;
 
                     }
-										if (!params.checkChanges) unbiasedPass.setChanged(true);
-
-                } else {
-                    if (!params.checkChanges) unbiasedPass.setChanged(false);
-
+                    if (!params.checkChanges) unbiasedPass.hasChanged();
                 }
 
-        if ( params.postprocessing){
-          composer.render();
-        } else if (!params.postprocessing) {
-          renderer.render( scene, camera );
-        }
+                if ( params.postprocessing){
+                  composer.render();
+                } else if (!params.postprocessing) {
+                  renderer.render( scene, camera );
+                }
 
             }
 
