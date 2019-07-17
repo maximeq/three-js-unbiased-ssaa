@@ -237,6 +237,23 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                 this.renderTargetMean[i].setSize( width, height );
             }
         }
+
+        if (this.newRender){
+            var newWidth = Math.pow(2,Math.ceil(Math.log2(width)));
+            var newHeight = Math.pow(2,Math.ceil(Math.log2(height)));
+            if (this.newRender.width !== newWidth || this.newRender.height !== newHeight){
+                this.newRender.setSize( newWidth, newHeight );
+                if (this.renderTargetCompare){
+                    this.renderTargetCompare.setSize( newWidth, newHeight );
+                }
+                if (this.oldRender){
+                    this.oldRender.setSize( newWidth, newHeight );
+                }
+                if (this.buffer){
+                    this.buffer = new Uint8Array( newWidth * newHeight * 4 );
+                }
+            }
+        }
         this.hasChanged();
     },
 
@@ -381,7 +398,20 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
             var width = Math.pow(2,Math.ceil(Math.log2(readBuffer.width)));
             var height = Math.pow(2,Math.ceil(Math.log2(readBuffer.height)));
 
-            if (!this.quadCompare){
+
+            this.newRender = this.newRender ||
+                            new THREE.WebGLRenderTarget(
+                                width,
+                                height,
+                                {
+                                    minFilter: THREE.LinearFilter,
+                                    magFilter: THREE.NearestFilter,
+                                    format: THREE.RGBAFormat
+                                }
+            );
+            renderer.render(this.scene, this.camera, this.newRender);
+            if (!this.oldRender){
+
                 this.quadCompare = new THREE.Mesh(
                     new THREE.PlaneBufferGeometry( 2, 2 ),
                     this.materialCompare
@@ -398,20 +428,7 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                         format: THREE.RGBAFormat
                     }
                 );
-            }
-            this.buffer = this.buffer || new Uint8Array( width * height * 4 );
-            this.newRender = this.newRender ||
-                            new THREE.WebGLRenderTarget(
-                                width,
-                                height,
-                                {
-                                    minFilter: THREE.LinearFilter,
-                                    magFilter: THREE.NearestFilter,
-                                    format: THREE.RGBAFormat
-                                }
-            );
-            renderer.render(this.scene, this.camera, this.newRender);
-            if (!this.oldRender){
+
                 this.hasChanged();
                 this.oldRender = this.newRender;
                 this.newRender = null;
@@ -420,8 +437,10 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                 this.materialCompare.uniforms["oldRender"].value = this.oldRender.texture;
 
                 renderer.render(this.sceneQuadCompare, this.camera, this.renderTargetCompare);
-                renderer.readRenderTargetPixels( this.renderTargetCompare, 0, 0, readBuffer.width, readBuffer.height, this.buffer);
-                for (var i = 0; i < this.buffer.length/4; i+=4){
+
+                this.buffer = this.buffer || new Uint8Array( width * height * 4 );
+                renderer.readRenderTargetPixels( this.renderTargetCompare, 0, 0, width, height, this.buffer);
+                for (var i = 0; i < this.buffer.length; i+=4){
                     if (this.buffer[i] !== 0){
                         this.hasChanged();
                         break;
