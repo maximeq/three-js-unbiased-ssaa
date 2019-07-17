@@ -93,6 +93,35 @@ var SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax)
     this.renderTargetMean = [];
     this.nextRenderMeanIndex = 0;
 
+    this.materialCompare = new THREE.ShaderMaterial({
+        uniforms: {
+            oldRender: { value: null },
+            newRender: { value: null }
+        },
+        vertexShader: [
+            "varying vec2 vUv;",
+            "void main() {",
+
+            "   vUv = uv;",
+            "   gl_Position = vec4(position,1);",
+
+            "}"
+        ].join("\n"),
+        fragmentShader: [
+            "uniform sampler2D oldRender;",
+            "uniform sampler2D newRender;",
+            "varying vec2 vUv;",
+
+            "void main() {",
+
+            "	vec4 oldRender = texture2D( oldRender, vUv );",
+            "	vec4 newRender = texture2D( newRender, vUv );",
+            "   gl_FragColor = vec4(abs(oldRender[0]-newRender[0]) + abs(oldRender[1]-newRender[1]) + abs(oldRender[2]-newRender[2]) + abs(oldRender[3]-newRender[3]),0,0,0);",
+
+            "}"
+        ].join("\n"),
+    });
+
 };
 
 SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
@@ -132,6 +161,13 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
         }
 
         this.materialMean.dispose();
+        this.materialCompare.dispose();
+        if (this.newRender){
+            this.newRender.dispose();
+        }
+        if (this.oldRender){
+            this.oldRender.dispose();
+        }
 
     },
 
@@ -341,22 +377,59 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
         // Only check if changed has not been set to true
         if (!this.changed && this.autoCheckChange){
             // Check if the scene has changed (array comparison)
-            this.newBuffer = this.newBuffer || new Uint8Array( readBuffer.width * readBuffer.height * 4);
-            renderer.readRenderTargetPixels( readBuffer, 0, 0, readBuffer.width, readBuffer.height, this.newBuffer);
-            if (!this.oldBuffer){
+
+            var width = Math.pow(2,Math.ceil(Math.log2(readBuffer.width)));
+            var height = Math.pow(2,Math.ceil(Math.log2(readBuffer.height)));
+
+            if (!this.quadCompare){
+                this.quadCompare = new THREE.Mesh(
+                    new THREE.PlaneBufferGeometry( 2, 2 ),
+                    this.materialCompare
+                );
+                this.quadCompare.frustumCulled = false; // Avoid getting clipped
+                this.sceneQuadCompare = new THREE.Scene();
+                this.sceneQuadCompare.add( this.quadCompare );
+                this.renderTargetCompare = new THREE.WebGLRenderTarget(
+                    width,
+                    height,
+                    {
+                        minFilter: THREE.LinearFilter,
+                        magFilter: THREE.NearestFilter,
+                        format: THREE.RGBAFormat
+                    }
+                );
+            }
+            this.buffer = this.buffer || new Uint8Array( width * height * 4 );
+            this.newRender = this.newRender ||
+                            new THREE.WebGLRenderTarget(
+                                width,
+                                height,
+                                {
+                                    minFilter: THREE.LinearFilter,
+                                    magFilter: THREE.NearestFilter,
+                                    format: THREE.RGBAFormat
+                                }
+            );
+            renderer.render(this.scene, this.camera, this.newRender);
+            if (!this.oldRender){
                 this.hasChanged();
-                this.oldBuffer = this.newBuffer;
-                this.newBuffer = null;
+                this.oldRender = this.newRender;
+                this.newRender = null;
             } else {
-                for (var i = 0; i < this.newBuffer.length; i++){
-                    if (this.newBuffer[i] !== this.oldBuffer[i]){
+                this.materialCompare.uniforms["newRender"].value = this.newRender.texture;
+                this.materialCompare.uniforms["oldRender"].value = this.oldRender.texture;
+
+                renderer.render(this.sceneQuadCompare, this.camera, this.renderTargetCompare);
+                renderer.readRenderTargetPixels( this.renderTargetCompare, 0, 0, readBuffer.width, readBuffer.height, this.buffer);
+                for (var i = 0; i < this.buffer.length/4; i+=4){
+                    if (this.buffer[i] !== 0){
                         this.hasChanged();
                         break;
                     }
                 }
-                var swap = this.oldBuffer;
-                this.oldBuffer = this.newBuffer;
-                this.newBuffer = swap;
+                var swap = this.oldRender;
+                this.oldRender = this.newRender;
+                this.newRender = swap;
             }
         }
 
