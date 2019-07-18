@@ -26,7 +26,7 @@
 
             "void main() {",
                 "vUv = uv;",
-                "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+                "gl_Position = vec4( position, 1.0 );",
             "}"
         ].join("\n"),
         fragmentShader: [
@@ -149,7 +149,7 @@
                 "void main() {",
 
                 "   vUv = uv;",
-                "   gl_Position = vec4(position,1);",
+                "   gl_Position = vec4( position, 1.0 );",
 
                 "}"
             ].join("\n"),
@@ -162,11 +162,61 @@
 
                 "	vec4 oldRender = texture2D( oldRender, vUv );",
                 "	vec4 newRender = texture2D( newRender, vUv );",
-                "   gl_FragColor = vec4(abs(oldRender[0]-newRender[0]) + abs(oldRender[1]-newRender[1]) + abs(oldRender[2]-newRender[2]) + abs(oldRender[3]-newRender[3]),0,0,0);",
+                "   float diff = clamp(abs(oldRender[0]-newRender[0]) + abs(oldRender[1]-newRender[1]) + abs(oldRender[2]-newRender[2]) + abs(oldRender[3]-newRender[3]),0.0,1.0);",
+                "   gl_FragColor = vec4(diff,0.0,0.0,0.0);",
 
                 "}"
             ].join("\n"),
         });
+        this.quadCompare = new threeFull.Mesh(
+            new threeFull.PlaneBufferGeometry( 2, 2 ),
+            this.materialCompare
+        );
+        this.quadCompare.frustumCulled = false;
+        this.sceneQuadCompare = new threeFull.Scene();
+        this.sceneQuadCompare.add( this.quadCompare );
+
+        this.materialSubdivide = new threeFull.ShaderMaterial({
+            uniforms: {
+                render: { value: null },
+            },
+            vertexShader: [
+                "varying vec2 vUv;",
+                "void main() {",
+
+                "   vUv = uv;",
+                "   gl_Position = vec4( position, 1.0 );",
+
+                "}"
+            ].join("\n"),
+            fragmentShader: [
+                "uniform sampler2D render;",
+                "varying vec2 vUv;",
+
+                "void main() {",
+
+                "	vec4 lowerLeft = texture2D( render, vUv );",
+                "	vec4 upperLeft = texture2D( render, vec2(vUv[0],vUv[1]+0.5) );",
+                "	vec4 lowerRight = texture2D( render, vec2(vUv[0]+0.5,vUv[1]) );",
+                "	vec4 upperRight = texture2D( render, vec2(vUv[0]+0.5,vUv[1]+0.5) );",
+                "   float diff = lowerLeft[0]  + upperLeft[0] + lowerRight[0] + upperRight[0];",
+                "   gl_FragColor = vec4(diff,0.,0.,0.);",
+
+                "}"
+            ].join("\n"),
+        });
+
+        this.quadSubdivide = new threeFull.Mesh(
+            new threeFull.PlaneBufferGeometry( 2, 2 ),
+            this.materialSubdivide
+        );
+        this.quadSubdivide.frustumCulled = false;
+        this.quadSubdivide.geometry.attributes.uv.array[1] /= 2;
+        this.quadSubdivide.geometry.attributes.uv.array[2] /= 2;
+        this.quadSubdivide.geometry.attributes.uv.array[3] /= 2;
+        this.quadSubdivide.geometry.attributes.uv.array[6] /= 2;
+        this.sceneQuadSubdivide = new threeFull.Scene();
+        this.sceneQuadSubdivide.add( this.quadSubdivide );
 
     };
 
@@ -181,23 +231,11 @@
             }
 
             for (var i = 0; i < this.renderTarget.length; i++){
-                if ( this.renderTarget[i] ) {
-
-                    this.renderTarget[i].dispose();
-                    this.renderTarget[i] = null;
-
-                }
+                if ( this.renderTarget[i] ) this.renderTarget[i].dispose();
             }
 
             for (var i = 0; i < this.renderTargetMean.length; i++){
-
-                if ( this.renderTargetMean[i] ){
-
-                    this.renderTargetMean[i].dispose();
-                    this.renderTargetMean[i] = null;
-
-                }
-
+                if ( this.renderTargetMean[i] ) this.renderTargetMean[i].dispose();
             }
 
             this.sceneQuad.dispose();
@@ -210,9 +248,9 @@
             this.materialCompare.dispose();
             if (this.newRender){
                 this.newRender.dispose();
-            }
-            if (this.oldRender){
-                this.oldRender.dispose();
+                if (this.oldRender) this.oldRender.dispose();
+                if (this.renderTargetCompare) this.renderTargetCompare.dispose();
+                if (this.sceneQuadCompare) this.sceneQuadCompare.dispose();
             }
 
         },
@@ -289,15 +327,10 @@
                 var newHeight = Math.pow(2,Math.ceil(Math.log2(height)));
                 if (this.newRender.width !== newWidth || this.newRender.height !== newHeight){
                     this.newRender.setSize( newWidth, newHeight );
-                    if (this.renderTargetCompare){
-                        this.renderTargetCompare.setSize( newWidth, newHeight );
-                    }
-                    if (this.oldRender){
-                        this.oldRender.setSize( newWidth, newHeight );
-                    }
-                    if (this.buffer){
-                        this.buffer = new Uint8Array( newWidth * newHeight * 4 );
-                    }
+                    if (this.renderTargetCompare) this.renderTargetCompare.setSize( newWidth, newHeight );
+                    if (this.renderTargetSubdivide) this.renderTargetSubdivide.setSize( newWidth/2, newHeight/2);
+                    if (this.oldRender) this.oldRender.setSize( newWidth, newHeight );
+                    if (this.buffer) this.buffer = new Uint8Array( newWidth * newHeight );
                 }
             }
             this.hasChanged();
@@ -382,7 +415,9 @@
                                 {
                                     minFilter: threeFull.LinearFilter,
                                     magFilter: threeFull.NearestFilter,
-                                    format: threeFull.RGBAFormat
+                                    format: threeFull.RGBAFormat,
+                                    depthBuffer: false,
+                                    stencilBuffer: false
                                 }
                             );
                         }
@@ -444,7 +479,6 @@
                 var width = Math.pow(2,Math.ceil(Math.log2(readBuffer.width)));
                 var height = Math.pow(2,Math.ceil(Math.log2(readBuffer.height)));
 
-
                 this.newRender = this.newRender ||
                                 new threeFull.WebGLRenderTarget(
                                     width,
@@ -458,20 +492,27 @@
                 renderer.render(this.scene, this.camera, this.newRender);
                 if (!this.oldRender){
 
-                    this.quadCompare = new threeFull.Mesh(
-                        new threeFull.PlaneBufferGeometry( 2, 2 ),
-                        this.materialCompare
-                    );
-                    this.quadCompare.frustumCulled = false; // Avoid getting clipped
-                    this.sceneQuadCompare = new threeFull.Scene();
-                    this.sceneQuadCompare.add( this.quadCompare );
                     this.renderTargetCompare = new threeFull.WebGLRenderTarget(
                         width,
                         height,
                         {
                             minFilter: threeFull.LinearFilter,
                             magFilter: threeFull.NearestFilter,
-                            format: threeFull.RGBAFormat
+                            format: threeFull.RGBFormat,
+                            depthBuffer: false,
+                            stencilBuffer: false
+                        }
+                    );
+
+                    this.renderTargetSubdivide = new threeFull.WebGLRenderTarget(
+                        width/2,
+                        height/2,
+                        {
+                            minFilter: threeFull.LinearFilter,
+                            magFilter: threeFull.NearestFilter,
+                            format: threeFull.RGBAFormat,
+                            depthBuffer: false,
+                            stencilBuffer: false
                         }
                     );
 
@@ -479,13 +520,19 @@
                     this.oldRender = this.newRender;
                     this.newRender = null;
                 } else {
+
                     this.materialCompare.uniforms["newRender"].value = this.newRender.texture;
                     this.materialCompare.uniforms["oldRender"].value = this.oldRender.texture;
 
                     renderer.render(this.sceneQuadCompare, this.camera, this.renderTargetCompare);
 
-                    this.buffer = this.buffer || new Uint8Array( width * height * 4 );
-                    renderer.readRenderTargetPixels( this.renderTargetCompare, 0, 0, width, height, this.buffer);
+                    this.materialSubdivide.uniforms["render"].value = this.renderTargetCompare.texture;
+
+                    renderer.render(this.sceneQuadSubdivide, this.camera, this.renderTargetSubdivide);
+                    this.buffer = this.buffer || new Uint8Array( width * height ); // width/2 * height/2 *4
+
+                    renderer.readRenderTargetPixels( this.renderTargetSubdivide, 0, 0, width/2, height/2, this.buffer);
+                    console.log(this.buffer.length);
                     for (var i = 0; i < this.buffer.length; i+=4){
                         if (this.buffer[i] !== 0){
                             this.hasChanged();
