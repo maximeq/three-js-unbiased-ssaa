@@ -487,7 +487,7 @@
                         {
                             minFilter: threeFull.LinearFilter,
                             magFilter: threeFull.NearestFilter,
-                            format: threeFull.RGBFormat,
+                            format: threeFull.RGBAFormat,
                             depthBuffer: false,
                             stencilBuffer: false
                         }

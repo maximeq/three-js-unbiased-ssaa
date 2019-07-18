@@ -441,7 +441,7 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                     {
                         minFilter: THREE.LinearFilter,
                         magFilter: THREE.NearestFilter,
-                        format: THREE.RGBFormat,
+                        format: THREE.RGBAFormat,
                         depthBuffer: false,
                         stencilBuffer: false
                     }
