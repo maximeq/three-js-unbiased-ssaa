@@ -57,8 +57,7 @@
                 var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
 
                 var mesh = new THREE.Mesh( geometry, material );
-                mesh.position.x = 200;
-                mesh.position.y = -200;
+                mesh.position.x = -100;
                 scene.add( mesh );
 
                 var texture = new THREE.TextureLoader().load( "textures/brick_diffuse.jpg" );
@@ -70,8 +69,7 @@
                 var material = new THREE.MeshBasicMaterial( { map: texture } );
 
                 var mesh = new THREE.Mesh( geometry, material );
-                mesh.position.x = 200;
-                mesh.position.y = -200;
+                mesh.position.x = 100;
                 scene.add( mesh );
 
                 // postprocessing

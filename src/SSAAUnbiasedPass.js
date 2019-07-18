@@ -94,6 +94,10 @@ var SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax)
     this.nextRenderMeanIndex = 0;
 
     this.materialCompare = new THREE.ShaderMaterial({
+        defines: {
+            'WIDTH_STEP': 0.0,
+            'HEIGHT_STEP': 0.0
+        },
         uniforms: {
             oldRender: { value: null },
             newRender: { value: null }
@@ -114,14 +118,24 @@ var SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax)
 
             "void main() {",
 
-            "	vec4 oldRender = texture2D( oldRender, vUv );",
-            "	vec4 newRender = texture2D( newRender, vUv );",
-            "   float diff = clamp(abs(oldRender[0]-newRender[0]) + abs(oldRender[1]-newRender[1]) + abs(oldRender[2]-newRender[2]) + abs(oldRender[3]-newRender[3]),0.0,1.0);",
-            "   gl_FragColor = vec4(diff,0.0,0.0,0.0);",
+            "   float diff = 0.0;",
+            "   float sumDiff = 0.0;",
+            "   vec4 oldRenderUv;",
+            "   vec4 newRenderUv;",
+            "   for (float i = 0.; i < 1.; i += HEIGHT_STEP){",
+            "       for (float j = 0.; j < 1.; j += WIDTH_STEP){",
+            "           oldRenderUv = texture2D( oldRender, vec2(vUv[0] + i, vUv[1] + j) );",
+            "           newRenderUv = texture2D( newRender, vec2(vUv[0] + i, vUv[1] + j) );",
+            "           diff = clamp(abs(oldRenderUv[0]-newRenderUv[0]) + abs(oldRenderUv[1]-newRenderUv[1]) + abs(oldRenderUv[2]-newRenderUv[2]) + abs(oldRenderUv[3]-newRenderUv[3]),0.0,1.0);",
+            "           sumDiff += diff;",
+            "       }",
+            "   }",
+            "   gl_FragColor = vec4(sumDiff,0.,0.,0.);",
 
             "}"
         ].join("\n"),
     });
+
     this.quadCompare = new THREE.Mesh(
         new THREE.PlaneBufferGeometry( 2, 2 ),
         this.materialCompare
@@ -129,48 +143,6 @@ var SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax)
     this.quadCompare.frustumCulled = false;
     this.sceneQuadCompare = new THREE.Scene();
     this.sceneQuadCompare.add( this.quadCompare );
-
-    this.materialSubdivide = new THREE.ShaderMaterial({
-        uniforms: {
-            render: { value: null },
-        },
-        vertexShader: [
-            "varying vec2 vUv;",
-            "void main() {",
-
-            "   vUv = uv;",
-            "   gl_Position = vec4( position, 1.0 );",
-
-            "}"
-        ].join("\n"),
-        fragmentShader: [
-            "uniform sampler2D render;",
-            "varying vec2 vUv;",
-
-            "void main() {",
-
-            "	vec4 lowerLeft = texture2D( render, vUv );",
-            "	vec4 upperLeft = texture2D( render, vec2(vUv[0],vUv[1]+0.5) );",
-            "	vec4 lowerRight = texture2D( render, vec2(vUv[0]+0.5,vUv[1]) );",
-            "	vec4 upperRight = texture2D( render, vec2(vUv[0]+0.5,vUv[1]+0.5) );",
-            "   float diff = lowerLeft[0]  + upperLeft[0] + lowerRight[0] + upperRight[0];",
-            "   gl_FragColor = vec4(diff,0.,0.,0.);",
-
-            "}"
-        ].join("\n"),
-    });
-
-    this.quadSubdivide = new THREE.Mesh(
-        new THREE.PlaneBufferGeometry( 2, 2 ),
-        this.materialSubdivide
-    );
-    this.quadSubdivide.frustumCulled = false;
-    this.quadSubdivide.geometry.attributes.uv.array[1] /= 2;
-    this.quadSubdivide.geometry.attributes.uv.array[2] /= 2;
-    this.quadSubdivide.geometry.attributes.uv.array[3] /= 2;
-    this.quadSubdivide.geometry.attributes.uv.array[6] /= 2;
-    this.sceneQuadSubdivide = new THREE.Scene();
-    this.sceneQuadSubdivide.add( this.quadSubdivide );
 
 };
 
@@ -200,6 +172,7 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
 
         this.materialMean.dispose();
         this.materialCompare.dispose();
+        this.sceneCompare.dispose();
         if (this.newRender){
             this.newRender.dispose();
             if (this.oldRender) this.oldRender.dispose();
@@ -277,14 +250,28 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
         }
 
         if (this.newRender){
-            var newWidth = Math.pow(2,Math.ceil(Math.log2(width)));
-            var newHeight = Math.pow(2,Math.ceil(Math.log2(height)));
+            var pow2Width = Math.ceil(Math.log2(width));
+            var pow2Height = Math.ceil(Math.log2(height));
+            var newWidth = Math.pow(2, pow2Width);
+            var newHeight = Math.pow(2, pow2Height);
             if (this.newRender.width !== newWidth || this.newRender.height !== newHeight){
                 this.newRender.setSize( newWidth, newHeight );
-                if (this.renderTargetCompare) this.renderTargetCompare.setSize( newWidth, newHeight );
-                if (this.renderTargetSubdivide) this.renderTargetSubdivide.setSize( newWidth/2, newHeight/2);
+
                 if (this.oldRender) this.oldRender.setSize( newWidth, newHeight );
                 if (this.buffer) this.buffer = new Uint8Array( newWidth * newHeight );
+
+                var nbrWidthSubdivision = Math.pow(2,pow2Width-4);
+                var nbrHeightSubdivision = Math.pow(2,pow2Height-4);
+
+                this.quadCompare.geometry.attributes.uv.array[1] /= nbrHeightSubdivision;
+                this.quadCompare.geometry.attributes.uv.array[2] /= nbrWidthSubdivision;
+                this.quadCompare.geometry.attributes.uv.array[3] /= nbrHeightSubdivision;
+                this.quadCompare.geometry.attributes.uv.array[6] /= nbrWidthSubdivision;
+
+                this.materialCompare.defines["WIDTH_STEP"] = 1/nbrWidthSubdivision;
+                this.materialCompare.defines["HEIGHT_STEP"] = 1/nbrHeightSubdivision;
+                this.materialCompare.needsUpdate = true;
+
             }
         }
         this.hasChanged();
@@ -429,9 +416,11 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
         // Only check if changed has not been set to true
         if (!this.changed && this.autoCheckChange){
             // Check if the scene has changed (array comparison)
+            var pow2Width = Math.ceil( Math.log2( readBuffer.width ) );
+            var pow2Height = Math.ceil( Math.log2( readBuffer.height ) );
 
-            var width = Math.pow(2,Math.ceil(Math.log2(readBuffer.width)));
-            var height = Math.pow(2,Math.ceil(Math.log2(readBuffer.height)));
+            var width = Math.pow( 2, pow2Width );
+            var height = Math.pow( 2, pow2Height );
 
             this.newRender = this.newRender ||
                             new THREE.WebGLRenderTarget(
@@ -447,8 +436,8 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
             if (!this.oldRender){
 
                 this.renderTargetCompare = new THREE.WebGLRenderTarget(
-                    width,
-                    height,
+                    16,
+                    16,
                     {
                         minFilter: THREE.LinearFilter,
                         magFilter: THREE.NearestFilter,
@@ -457,18 +446,17 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                         stencilBuffer: false
                     }
                 );
+                // Render on 2^4*2^4 px
+                var nbrWidthSubdivision = Math.pow(2,pow2Width-4);
+                var nbrHeightSubdivision = Math.pow(2,pow2Height-4);
 
-                this.renderTargetSubdivide = new THREE.WebGLRenderTarget(
-                    width/2,
-                    height/2,
-                    {
-                        minFilter: THREE.LinearFilter,
-                        magFilter: THREE.NearestFilter,
-                        format: THREE.RGBAFormat,
-                        depthBuffer: false,
-                        stencilBuffer: false
-                    }
-                );
+                this.quadCompare.geometry.attributes.uv.array[1] /= nbrHeightSubdivision;
+                this.quadCompare.geometry.attributes.uv.array[2] /= nbrWidthSubdivision;
+                this.quadCompare.geometry.attributes.uv.array[3] /= nbrHeightSubdivision;
+                this.quadCompare.geometry.attributes.uv.array[6] /= nbrWidthSubdivision;
+
+                this.materialCompare.defines["WIDTH_STEP"] = 1/nbrWidthSubdivision;
+                this.materialCompare.defines["HEIGHT_STEP"] = 1/nbrHeightSubdivision;
 
                 this.hasChanged();
                 this.oldRender = this.newRender;
@@ -480,13 +468,9 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
 
                 renderer.render(this.sceneQuadCompare, this.camera, this.renderTargetCompare);
 
-                this.materialSubdivide.uniforms["render"].value = this.renderTargetCompare.texture;
+                this.buffer = this.buffer || new Uint8Array( 16 * 16 * 4 );
 
-                renderer.render(this.sceneQuadSubdivide, this.camera, this.renderTargetSubdivide);
-                this.buffer = this.buffer || new Uint8Array( width * height ); // width/2 * height/2 *4
-
-                renderer.readRenderTargetPixels( this.renderTargetSubdivide, 0, 0, width/2, height/2, this.buffer);
-                console.log(this.buffer.length);
+                renderer.readRenderTargetPixels( this.renderTargetCompare, 0, 0, 16, 16, this.buffer);
                 for (var i = 0; i < this.buffer.length; i+=4){
                     if (this.buffer[i] !== 0){
                         this.hasChanged();
