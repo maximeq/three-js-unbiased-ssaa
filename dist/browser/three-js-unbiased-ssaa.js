@@ -341,7 +341,7 @@
                             width,
                             height,
                             {
-                                minFilter: threeFull.LinearFilter,
+                                minFilter: threeFull.NearestFilter,
                                 magFilter: threeFull.NearestFilter,
                                 format: threeFull.RGBAFormat
                             }
@@ -400,7 +400,7 @@
                                 readBuffer.width,
                                 readBuffer.height,
                                 {
-                                    minFilter: threeFull.LinearFilter,
+                                    minFilter: threeFull.NearestFilter,
                                     magFilter: threeFull.NearestFilter,
                                     format: threeFull.RGBAFormat,
                                     depthBuffer: false,
@@ -473,7 +473,7 @@
                                     width,
                                     height,
                                     {
-                                        minFilter: threeFull.LinearFilter,
+                                        minFilter: threeFull.NearestFilter,
                                         magFilter: threeFull.NearestFilter,
                                         format: threeFull.RGBAFormat
                                     }
@@ -485,7 +485,7 @@
                         16,
                         16,
                         {
-                            minFilter: threeFull.LinearFilter,
+                            minFilter: threeFull.NearestFilter,
                             magFilter: threeFull.NearestFilter,
                             format: threeFull.RGBAFormat,
                             depthBuffer: false,

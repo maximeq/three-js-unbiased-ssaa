@@ -295,7 +295,7 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                         width,
                         height,
                         {
-                            minFilter: THREE.LinearFilter,
+                            minFilter: THREE.NearestFilter,
                             magFilter: THREE.NearestFilter,
                             format: THREE.RGBAFormat
                         }
@@ -354,7 +354,7 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                             readBuffer.width,
                             readBuffer.height,
                             {
-                                minFilter: THREE.LinearFilter,
+                                minFilter: THREE.NearestFilter,
                                 magFilter: THREE.NearestFilter,
                                 format: THREE.RGBAFormat,
                                 depthBuffer: false,
@@ -427,7 +427,7 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                                 width,
                                 height,
                                 {
-                                    minFilter: THREE.LinearFilter,
+                                    minFilter: THREE.NearestFilter,
                                     magFilter: THREE.NearestFilter,
                                     format: THREE.RGBAFormat
                                 }
@@ -439,7 +439,7 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
                     16,
                     16,
                     {
-                        minFilter: THREE.LinearFilter,
+                        minFilter: THREE.NearestFilter,
                         magFilter: THREE.NearestFilter,
                         format: THREE.RGBAFormat,
                         depthBuffer: false,
