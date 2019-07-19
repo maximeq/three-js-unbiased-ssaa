@@ -78,11 +78,6 @@
                 composer.renderTarget1.format = THREE.RGBAFormat;
                 composer.renderTarget2.format = THREE.RGBAFormat;
 
-                // var renderPass = new THREE.RenderPass( scene, camera );
-                // composer.addPass( renderPass );
-                //
-                // window.renderPass = renderPass;
-
                 unbiasedPass = new THREE.SSAAUnbiasedPass( scene, camera );
                 composer.addPass(unbiasedPass);
                 unbiasedPass.renderToScreen = true;

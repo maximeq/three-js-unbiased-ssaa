@@ -151,9 +151,6 @@
                 //
                 composer1 = new THREE.EffectComposer( renderer );
 
-                var renderPass = new THREE.RenderPass( scene, camera );
-                composer1.addPass( renderPass );
-
                 unbiasedPass = new THREE.SSAAUnbiasedPass(scene, camera);
                 unbiasedPass.renderToScreen = true;
                 unbiasedPass.setAutoCheckChange(true);
@@ -161,7 +158,6 @@
 
 
                 composer2 = new THREE.EffectComposer( renderer );
-                composer2.addPass( renderPass );
                 ssaaRenderPass = new THREE.SSAARenderPass( scene, camera );
                 composer2.addPass(ssaaRenderPass);
                 var copyPass = new THREE.ShaderPass( THREE.CopyShader );
