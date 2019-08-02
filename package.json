@@ -1,6 +1,6 @@
 {
   "name": "three-js-unbiased-ssaa",
-  "version": "2.0.3",
+  "version": "3.0.0",
   "description": "An unbiased pass for Super Sampling Anti Aliasing in THREE.JS",
   "main": "src/exports.js",
   "scripts": {
