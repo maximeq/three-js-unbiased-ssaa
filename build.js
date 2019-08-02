@@ -36,7 +36,7 @@ build({
     external: [ 'three-full' ],
 }, {
     format: 'umd',
-    name: 'THREESSAAUnbiasedPass',
+    name: 'THREEUnbiasedSSAA',
     file: './dist/browser/three-js-unbiased-ssaa.js',
     globals: {
         'three-full' : 'THREE'
@@ -64,7 +64,7 @@ build({
     external: [ 'three-full' ],
 }, {
     format: 'umd',
-    name: 'THREESSAAUnbiasedPass',
+    name: 'THREEUnbiasedSSAA',
     file: './dist/browser/three-js-unbiased-ssaa.min.js',
     globals: {
         'three-full' : 'THREE'

@@ -1,7 +1,7 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('three-full')) :
     typeof define === 'function' && define.amd ? define(['three-full'], factory) :
-    (global.THREESSAAUnbiasedPass = factory(global.THREE));
+    (global.THREEUnbiasedSSAA = factory(global.THREE));
 }(this, (function (threeFull) { 'use strict';
 
     threeFull = threeFull && threeFull.hasOwnProperty('default') ? threeFull['default'] : threeFull;
