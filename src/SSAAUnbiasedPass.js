@@ -150,6 +150,10 @@ SSAAUnbiasedPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
 
     constructor: SSAAUnbiasedPass,
 
+    isFinalRenderDone: function(){
+        return this.finalRenderDone;
+    },
+
     dispose: function () {
 
         for (var i = 0 ; i < 4 ; i++){

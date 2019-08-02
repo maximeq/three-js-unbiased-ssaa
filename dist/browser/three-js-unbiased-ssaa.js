@@ -196,6 +196,10 @@
 
         constructor: SSAAUnbiasedPass,
 
+        isFinalRenderDone: function(){
+            return this.finalRenderDone;
+        },
+
         dispose: function () {
 
             for (var i = 0 ; i < 4 ; i++){
