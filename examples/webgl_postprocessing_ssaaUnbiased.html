@@ -75,8 +75,8 @@
                 // postprocessing
 
                 composer = new THREE.EffectComposer( renderer );
-                composer.renderTarget1.format = THREE.RGBAFormat;
-                composer.renderTarget2.format = THREE.RGBAFormat;
+                composer.renderTarget1.texture.format = THREE.RGBAFormat;
+                composer.renderTarget2.texture.format = THREE.RGBAFormat;
 
                 unbiasedPass = new THREE.SSAAUnbiasedPass( scene, camera );
                 composer.addPass(unbiasedPass);

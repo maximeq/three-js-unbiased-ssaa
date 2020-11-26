@@ -18,7 +18,7 @@
         },
 
         uniforms: {
-            "texture": {value: null}
+            "inputTextures": {value: null}
         },
 
         vertexShader: [
@@ -30,18 +30,22 @@
             "}"
         ].join("\n"),
         fragmentShader: [
-            "uniform sampler2D texture[ NUMBER_TEXTURE ];",
+            "uniform sampler2D inputTextures[ NUMBER_TEXTURE ];",
             "varying vec2 vUv;",
 
             "void main() {",
 
-                "vec4 color = vec4(0,0,0,0);",
-                "for (int i = 0; i < NUMBER_TEXTURE; i++)",
-                "{",
-                    "color += texture2D( texture[i], vUv);",
-                "}",
-                "float nbrTex = float(NUMBER_TEXTURE);",
-                "gl_FragColor = color/nbrTex;",
+            "   vec4 color = vec4(0,0,0,0);",
+            "   ",
+            "   #pragma unroll_loop_start",
+            "   for (int i = 0; i < NUMBER_TEXTURE; i++)",
+            "   {",
+            "       color += texture2D( inputTextures[i], vUv);",
+            "   }",
+            "   #pragma unroll_loop_end",
+            "   ",
+            "   float nbrTex = float(NUMBER_TEXTURE);",
+            "   gl_FragColor = color/nbrTex;",
 
             "}"
         ].join("\n")
@@ -86,16 +90,11 @@
             this.material[i] = new three.ShaderMaterial( {
                 uniforms: this.uniforms,
                 vertexShader: shader.vertexShader,
-                fragmentShader: shader.fragmentShader,
+                fragmentShader: shader.fragmentShader.replace(/NUMBER_TEXTURE/g, Math.pow(2,i).toString()),
             } );
-            this.material[i].defines[ 'NUMBER_TEXTURE' ] = Math.pow(2,i);
         }
 
         // Final Scene
-
-        if (three.REVISION !== "101"){
-            console.error("In next versions of threejs line 41 to 47:\n this.quad = new THREE.Pass.FullScreenQuad( this.material );");
-        }
 
         this.cameraQuad = new three.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
         this.sceneQuad = new three.Scene();
@@ -116,14 +115,9 @@
         this.materialMean = new three.ShaderMaterial( {
             uniforms: this.uniformsMean,
             vertexShader: shader.vertexShader,
-            fragmentShader: shader.fragmentShader
+            fragmentShader: shader.fragmentShader.replace(/NUMBER_TEXTURE/g, "8")
 
         } );
-        this.materialMean.defines[ 'NUMBER_TEXTURE' ] = 8.0;
-
-        if (three.REVISION !== "101"){
-            console.error("In next versions of threejs line 67 to 73:\n this.quadMean = new THREE.Pass.FullScreenQuad( this.materialMean );");
-        }
 
         this.sceneQuadMean = new three.Scene();
 
@@ -362,10 +356,11 @@
                     );
                 }
 
-                if (three.REVISION !== "101"){
-                    console.error("In next versions of threejs :\n render.setRenderTarget(this.renderTarget[ i + beginning ]); \n renderer.clear(); \n this.renderer( this.scene, this.camera);");
-                }
-                renderer.render( this.scene, this.camera , this.renderTarget[ i + beginning ]);
+                const rt = renderer.getRenderTarget();
+                renderer.setRenderTarget( this.renderTarget[ i + beginning ] );
+                renderer.clear();
+                renderer.render( this.scene, this.camera );
+                renderer.setRenderTarget( rt );
             }
 
             if (!this.changed){
@@ -417,20 +412,16 @@
                         for (var i = 0; i < 8 ; i++){
                             this.textureMean[i] = this.renderTarget[i].texture;
                         }
-                        this.uniformsMean[ "texture" ].value = this.textureMean;
+                        this.uniformsMean[ "inputTextures" ].value = this.textureMean;
 
-                        if (three.REVISION !== "101"){
-                            console.error("In next versions of threejs :\n render.setRenderTarget( [this.nextRenderMeanIndex] ); \n this.quadMean( renderer );");
-                        }
-
-                        renderer.render(
-                            this.sceneQuadMean,
-                            this.cameraQuad,
-                            this.renderTargetMean[this.nextRenderMeanIndex]
-                        );
+                        const rt = renderer.getRenderTarget();
+                        renderer.setRenderTarget( this.renderTargetMean[this.nextRenderMeanIndex] );
+                        renderer.clear();
+                        renderer.render( this.sceneQuadMean, this.cameraQuad );
+                        renderer.setRenderTarget( rt );
 
                         this.texture[this.nextRenderMeanIndex] = this.renderTargetMean[this.nextRenderMeanIndex].texture;
-                        this.uniforms["texture"].value = this.texture;
+                        this.uniforms["inputTextures"].value = this.texture;
 
                         this.nextRenderMeanIndex ++;
 
@@ -446,7 +437,7 @@
                     for (var i = 0; i < Math.min(size,8) ; i++){
                         this.texture[i] = this.renderTarget[i].texture;
                     }
-                    this.uniforms[ "texture" ].value = this.texture;
+                    this.uniforms[ "inputTextures" ].value = this.texture;
                 }
 
             }
@@ -482,7 +473,13 @@
                                         format: three.RGBAFormat
                                     }
                 );
-                renderer.render(this.scene, this.camera, this.newRender);
+
+                const rt = renderer.getRenderTarget();
+                renderer.setRenderTarget( this.newRender );
+                renderer.clear();
+                renderer.render( this.scene, this.camera );
+                renderer.setRenderTarget( rt );
+
                 if (!this.oldRender){
 
                     this.renderTargetCompare = new three.WebGLRenderTarget(
@@ -516,7 +513,11 @@
                     this.materialCompare.uniforms["newRender"].value = this.newRender.texture;
                     this.materialCompare.uniforms["oldRender"].value = this.oldRender.texture;
 
-                    renderer.render(this.sceneQuadCompare, this.camera, this.renderTargetCompare);
+                    const rt = renderer.getRenderTarget();
+                    renderer.setRenderTarget( this.renderTargetCompare );
+                    renderer.clear();
+                    renderer.render( this.sceneQuadCompare, this.camera );
+                    renderer.setRenderTarget( rt );
 
                     this.buffer = this.buffer || new Uint8Array( 16 * 16 * 4 );
 
@@ -560,19 +561,19 @@
 
             if ( this.renderToScreen ) {
 
-                if (three.REVISION !== "101"){
-                    console.error("In next versions of threejs :\n renderer.setRenderTarget( null ); \n this.quad.render( renderer );");
-                }
-
+                const rt = renderer.getRenderTarget();
+                renderer.setRenderTarget( null );
+                renderer.clear();
                 renderer.render( this.sceneQuad, this.cameraQuad );
+                renderer.setRenderTarget( rt );
 
             } else {
 
-                if (three.REVISION !== "101"){
-                    console.error("In next versions of threejs :\n renderer.setRenderTarget( writeBuffer ); \n if ( this.clear ) renderer.clear();\n this.quad.render( renderer );");
-                }
-
-                renderer.render( this.sceneQuad, this.cameraQuad , writeBuffer);
+                const rt = renderer.getRenderTarget();
+                renderer.setRenderTarget( writeBuffer );
+                renderer.clear();
+                renderer.render( this.sceneQuad, this.cameraQuad );
+                renderer.setRenderTarget( rt );
 
             }
 

@@ -10,7 +10,7 @@ var UnbiasedShader = {
     },
 
     uniforms: {
-        "texture": {value: null}
+        "inputTextures": {value: null}
     },
 
     vertexShader: [
@@ -22,18 +22,22 @@ var UnbiasedShader = {
         "}"
     ].join("\n"),
     fragmentShader: [
-        "uniform sampler2D texture[ NUMBER_TEXTURE ];",
+        "uniform sampler2D inputTextures[ NUMBER_TEXTURE ];",
         "varying vec2 vUv;",
 
         "void main() {",
 
-            "vec4 color = vec4(0,0,0,0);",
-            "for (int i = 0; i < NUMBER_TEXTURE; i++)",
-            "{",
-                "color += texture2D( texture[i], vUv);",
-            "}",
-            "float nbrTex = float(NUMBER_TEXTURE);",
-            "gl_FragColor = color/nbrTex;",
+        "   vec4 color = vec4(0,0,0,0);",
+        "   ",
+        "   #pragma unroll_loop_start",
+        "   for (int i = 0; i < NUMBER_TEXTURE; i++)",
+        "   {",
+        "       color += texture2D( inputTextures[i], vUv);",
+        "   }",
+        "   #pragma unroll_loop_end",
+        "   ",
+        "   float nbrTex = float(NUMBER_TEXTURE);",
+        "   gl_FragColor = color/nbrTex;",
 
         "}"
     ].join("\n")

@@ -1,6 +1,6 @@
 {
   "name": "three-js-unbiased-ssaa",
-  "version": "3.101.0",
+  "version": "3.122.0",
   "description": "An unbiased pass for Super Sampling Anti Aliasing in THREE.JS",
   "main": "src/exports.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "lint": "eslint --env node --env browser --env es6 **.js"
   },
   "dependencies": {
-    "@dualbox/three": "1.101.2"
+    "@dualbox/three": "1.122.1"
   },
   "devDependencies": {
     "eslint": "^4.11.0",
