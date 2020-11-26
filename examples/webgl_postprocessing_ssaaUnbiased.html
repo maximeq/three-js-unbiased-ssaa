@@ -8,7 +8,7 @@
     </head>
     <body>
         <div id="info">
-            Temporal Anti-Aliasing (TAA) pass by Dioxygen</a><br/><br/>
+            <a>Temporal Anti-Aliasing (TAA) pass by Dioxygen</a><br/><br/>
             When there is no motion in the scene, the SSAAUnbiasedPass compute the renderers<br/>
             needed to create a high quality anti-aliased result.<br/><br/>
 
@@ -16,13 +16,13 @@
 
         <div id="container"></div>
 
-        <script src="../node_modules/three-full/builds/Three.iife.js"></script>
-        <script>
-            // Alias to use Three-full as Three
-            var THREE = THREE || Three;
-        </script>
+        <script src="../node_modules/@dualbox/three/build/three.js"></script>
         <script src='lib/dat.gui.min.js'></script>
         <script src="lib/stats.min.js"></script>
+
+        <script src="../node_modules/@dualbox/three/examples/js/shaders/CopyShader.js"></script>
+        <script src="../node_modules/@dualbox/three/examples/js/postprocessing/EffectComposer.js"></script>
+        <script src="../node_modules/@dualbox/three/examples/js/postprocessing/ShaderPass.js"></script>
 
         <script src="../dist/browser/three-js-unbiased-ssaa.js"></script>
 

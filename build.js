@@ -33,13 +33,13 @@ async function build(inputOptions, outputOptions) {
 build({
     input: 'src/exports.js',
     plugins:  [ commonjs(), resolve() ],
-    external: [ 'three-full' ],
+    external: [ '@dualbox/three' ],
 }, {
     format: 'umd',
     name: 'THREEUnbiasedSSAA',
     file: './dist/browser/three-js-unbiased-ssaa.js',
     globals: {
-        'three-full' : 'THREE'
+        '@dualbox/three' : 'THREE'
     }
 });
 
@@ -61,13 +61,13 @@ build({
           bracketSpacing:false
         })
     ],
-    external: [ 'three-full' ],
+    external: [ '@dualbox/three' ],
 }, {
     format: 'umd',
     name: 'THREEUnbiasedSSAA',
     file: './dist/browser/three-js-unbiased-ssaa.min.js',
     globals: {
-        'three-full' : 'THREE'
+        '@dualbox/three' : 'THREE'
     }
 });
 

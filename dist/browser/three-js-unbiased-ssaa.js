@@ -1,10 +1,10 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('three-full')) :
-    typeof define === 'function' && define.amd ? define(['three-full'], factory) :
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('@dualbox/three')) :
+    typeof define === 'function' && define.amd ? define(['@dualbox/three'], factory) :
     (global.THREEUnbiasedSSAA = factory(global.THREE));
-}(this, (function (threeFull) { 'use strict';
+}(this, (function (three) { 'use strict';
 
-    threeFull = threeFull && threeFull.hasOwnProperty('default') ? threeFull['default'] : threeFull;
+    three = three && three.hasOwnProperty('default') ? three['default'] : three;
 
     /**
      * @author Manon Sutter / https://github.com/ManonSutter
@@ -56,7 +56,7 @@
      */
     var SSAAUnbiasedPass = function ( scene, camera, sampleLevelMin, sampleLevelMax) {
 
-        threeFull.Pass.call( this );
+        three.Pass.call( this );
 
         this.scene = scene;
         this.camera = camera;
@@ -78,12 +78,12 @@
 
         var shader = SSAAUnbiasedShader;
 
-        this.uniforms = threeFull.UniformsUtils.clone( shader.uniforms );
+        this.uniforms = three.UniformsUtils.clone( shader.uniforms );
         this.texture = [];
 
         this.material = [];
         for (var i = 0; i<4; i++){
-            this.material[i] = new threeFull.ShaderMaterial( {
+            this.material[i] = new three.ShaderMaterial( {
                 uniforms: this.uniforms,
                 vertexShader: shader.vertexShader,
                 fragmentShader: shader.fragmentShader,
@@ -93,15 +93,15 @@
 
         // Final Scene
 
-        if (threeFull.REVISION !== "101"){
+        if (three.REVISION !== "101"){
             console.error("In next versions of threejs line 41 to 47:\n this.quad = new THREE.Pass.FullScreenQuad( this.material );");
         }
 
-        this.cameraQuad = new threeFull.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-        this.sceneQuad = new threeFull.Scene();
+        this.cameraQuad = new three.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+        this.sceneQuad = new three.Scene();
 
-        this.quad = new threeFull.Mesh(
-            new threeFull.PlaneBufferGeometry( 2, 2 ),
+        this.quad = new three.Mesh(
+            new three.PlaneBufferGeometry( 2, 2 ),
             this.material
         );
         this.quad.frustumCulled = false; // Avoid getting clipped
@@ -111,9 +111,9 @@
         // Index of the last computed renderer on a motionless scene
         this.nextRenderIndex = 0;
 
-        this.uniformsMean = threeFull.UniformsUtils.clone( shader.uniforms );
+        this.uniformsMean = three.UniformsUtils.clone( shader.uniforms );
         this.textureMean = [];
-        this.materialMean = new threeFull.ShaderMaterial( {
+        this.materialMean = new three.ShaderMaterial( {
             uniforms: this.uniformsMean,
             vertexShader: shader.vertexShader,
             fragmentShader: shader.fragmentShader
@@ -121,14 +121,14 @@
         } );
         this.materialMean.defines[ 'NUMBER_TEXTURE' ] = 8.0;
 
-        if (threeFull.REVISION !== "101"){
+        if (three.REVISION !== "101"){
             console.error("In next versions of threejs line 67 to 73:\n this.quadMean = new THREE.Pass.FullScreenQuad( this.materialMean );");
         }
 
-        this.sceneQuadMean = new threeFull.Scene();
+        this.sceneQuadMean = new three.Scene();
 
-        this.quadMean = new threeFull.Mesh(
-            new threeFull.PlaneBufferGeometry( 2, 2 ),
+        this.quadMean = new three.Mesh(
+            new three.PlaneBufferGeometry( 2, 2 ),
             this.materialMean
         );
         this.quadMean.frustumCulled = false; // Avoid getting clipped
@@ -139,7 +139,7 @@
         this.renderTargetMean = [];
         this.nextRenderMeanIndex = 0;
 
-        this.materialCompare = new threeFull.ShaderMaterial({
+        this.materialCompare = new three.ShaderMaterial({
             defines: {
                 'WIDTH_STEP': 0.0,
                 'HEIGHT_STEP': 0.0
@@ -182,17 +182,17 @@
             ].join("\n"),
         });
 
-        this.quadCompare = new threeFull.Mesh(
-            new threeFull.PlaneBufferGeometry( 2, 2 ),
+        this.quadCompare = new three.Mesh(
+            new three.PlaneBufferGeometry( 2, 2 ),
             this.materialCompare
         );
         this.quadCompare.frustumCulled = false;
-        this.sceneQuadCompare = new threeFull.Scene();
+        this.sceneQuadCompare = new three.Scene();
         this.sceneQuadCompare.add( this.quadCompare );
 
     };
 
-    SSAAUnbiasedPass.prototype = Object.assign( Object.create( threeFull.Pass.prototype ), {
+    SSAAUnbiasedPass.prototype = Object.assign( Object.create( three.Pass.prototype ), {
 
         constructor: SSAAUnbiasedPass,
 
@@ -341,13 +341,13 @@
 
                 if ( ! this.renderTarget[ i + beginning ] ) {
                     this.renderTarget[ i + beginning ] =
-                        new threeFull.WebGLRenderTarget(
+                        new three.WebGLRenderTarget(
                             width,
                             height,
                             {
-                                minFilter: threeFull.NearestFilter,
-                                magFilter: threeFull.NearestFilter,
-                                format: threeFull.RGBAFormat
+                                minFilter: three.NearestFilter,
+                                magFilter: three.NearestFilter,
+                                format: three.RGBAFormat
                             }
                         );
                 }
@@ -362,7 +362,7 @@
                     );
                 }
 
-                if (threeFull.REVISION !== "101"){
+                if (three.REVISION !== "101"){
                     console.error("In next versions of threejs :\n render.setRenderTarget(this.renderTarget[ i + beginning ]); \n renderer.clear(); \n this.renderer( this.scene, this.camera);");
                 }
                 renderer.render( this.scene, this.camera , this.renderTarget[ i + beginning ]);
@@ -382,7 +382,7 @@
         meanCalculation: function (renderer, writeBuffer, readBuffer, sampleLevel){
 
             // Retrieve the matrix of the coordinates of the corresponding sampleLevel
-            this.jitterOffsets = threeFull.SSAAUnbiasedPass.JitterVectors[ Math.max( 0, Math.min( sampleLevel, 5 ) ) ];
+            this.jitterOffsets = three.SSAAUnbiasedPass.JitterVectors[ Math.max( 0, Math.min( sampleLevel, 5 ) ) ];
 
             var nbrRenderToDo = this.changed ? this.jitterOffsets.length : Math.pow( 2, this.sampleLevelMin );
 
@@ -400,13 +400,13 @@
                     if (size%8 === 0){
 
                         if (!this.renderTargetMean[this.nextRenderMeanIndex]) {
-                            this.renderTargetMean[this.nextRenderMeanIndex] = new threeFull.WebGLRenderTarget(
+                            this.renderTargetMean[this.nextRenderMeanIndex] = new three.WebGLRenderTarget(
                                 readBuffer.width,
                                 readBuffer.height,
                                 {
-                                    minFilter: threeFull.NearestFilter,
-                                    magFilter: threeFull.NearestFilter,
-                                    format: threeFull.RGBAFormat,
+                                    minFilter: three.NearestFilter,
+                                    magFilter: three.NearestFilter,
+                                    format: three.RGBAFormat,
                                     depthBuffer: false,
                                     stencilBuffer: false
                                 }
@@ -419,7 +419,7 @@
                         }
                         this.uniformsMean[ "texture" ].value = this.textureMean;
 
-                        if (threeFull.REVISION !== "101"){
+                        if (three.REVISION !== "101"){
                             console.error("In next versions of threejs :\n render.setRenderTarget( [this.nextRenderMeanIndex] ); \n this.quadMean( renderer );");
                         }
 
@@ -473,25 +473,25 @@
                 var height = Math.pow( 2, pow2Height );
 
                 this.newRender = this.newRender ||
-                                new threeFull.WebGLRenderTarget(
+                                new three.WebGLRenderTarget(
                                     width,
                                     height,
                                     {
-                                        minFilter: threeFull.NearestFilter,
-                                        magFilter: threeFull.NearestFilter,
-                                        format: threeFull.RGBAFormat
+                                        minFilter: three.NearestFilter,
+                                        magFilter: three.NearestFilter,
+                                        format: three.RGBAFormat
                                     }
                 );
                 renderer.render(this.scene, this.camera, this.newRender);
                 if (!this.oldRender){
 
-                    this.renderTargetCompare = new threeFull.WebGLRenderTarget(
+                    this.renderTargetCompare = new three.WebGLRenderTarget(
                         16,
                         16,
                         {
-                            minFilter: threeFull.NearestFilter,
-                            magFilter: threeFull.NearestFilter,
-                            format: threeFull.RGBAFormat,
+                            minFilter: three.NearestFilter,
+                            magFilter: three.NearestFilter,
+                            format: three.RGBAFormat,
                             depthBuffer: false,
                             stencilBuffer: false
                         }
@@ -560,7 +560,7 @@
 
             if ( this.renderToScreen ) {
 
-                if (threeFull.REVISION !== "101"){
+                if (three.REVISION !== "101"){
                     console.error("In next versions of threejs :\n renderer.setRenderTarget( null ); \n this.quad.render( renderer );");
                 }
 
@@ -568,7 +568,7 @@
 
             } else {
 
-                if (threeFull.REVISION !== "101"){
+                if (three.REVISION !== "101"){
                     console.error("In next versions of threejs :\n renderer.setRenderTarget( writeBuffer ); \n if ( this.clear ) renderer.clear();\n this.quad.render( renderer );");
                 }
 
@@ -625,8 +625,8 @@
 
     var SSAAUnbiasedPass_1 = SSAAUnbiasedPass;
 
-    threeFull.SSAAUnbiasedPass = SSAAUnbiasedPass_1;
-    threeFull.SSAAUnbiasedShader = SSAAUnbiasedShader;
+    three.SSAAUnbiasedPass = SSAAUnbiasedPass_1;
+    three.SSAAUnbiasedShader = SSAAUnbiasedShader;
 
     var SSAAUnbiased = {
         SSAAUnbiasedPass:SSAAUnbiasedPass_1,

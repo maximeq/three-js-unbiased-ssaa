@@ -13,7 +13,7 @@ Here is a shadow texture processed on the left by this unbiased ssaa, and on the
 
 
 ## THREE.JS Version
-The version used to implement this module is the THREE revision 101. Most of the lines to modify for a more recent version are specified by a console error in the concerned file. It has not yet been done since at the time this readme is written the three-full last revision has an unacceptable bug which prevent us from using the last THREE.JS version.
+The version used to implement this module is the THREE revision 101. Most of the lines to modify for a more recent version are specified by a console error in the concerned file. It has not yet been done since at the time this readme is written the @dualbox/three last revision has an unacceptable bug which prevent us from using the last THREE.JS version.
 
 ## Concept
 

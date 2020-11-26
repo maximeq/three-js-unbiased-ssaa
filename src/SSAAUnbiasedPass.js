@@ -1,5 +1,5 @@
 
-const THREE = require("three-full");
+const THREE = require("@dualbox/three");
 
 const UnbiasedShader = require("./SSAAUnbiasedShader");
 
