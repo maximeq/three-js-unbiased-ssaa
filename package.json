@@ -9,7 +9,7 @@
     "lint": "eslint --env node --env browser --env es6 **.js"
   },
   "dependencies": {
-    "@dualbox/three": "1.122.1"
+    "@dualbox/three": "~1.122.2"
   },
   "devDependencies": {
     "eslint": "^4.11.0",
