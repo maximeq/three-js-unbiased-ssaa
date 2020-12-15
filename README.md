@@ -1,19 +1,21 @@
 # Three.js Unbiased SSAA
 
-Simple SSAA pass for three js which fixes the bias issue found in THREE revision 101 and before.
+Simple SSAA pass for three js which fixes the bias issue found in three.js
 
 This development was sponsored by Dualbox (<https://www.dualbox.com/>).
 
 ## The issue
 
-Here is a shadow texture processed on the left by this unbiased ssaa, and on the right by the SSAA pass in THREE.JS examples before revision 101.
+Here is a shadow texture processed on the left by this unbiased ssaa, and on the right by the SSAA pass in THREE.JS examples.
 
 ![unbiasedShadow](https://user-images.githubusercontent.com/51316383/60586238-f5baf580-9d91-11e9-901c-514d4cc2af7a.png)
 ![biasedShadow](https://user-images.githubusercontent.com/51316383/60586247-f8b5e600-9d91-11e9-8a57-be92694c6e52.png)
 
 
 ## THREE.JS Version
-The version used to implement this module is the THREE revision 101. Most of the lines to modify for a more recent version are specified by a console error in the concerned file. It has not yet been done since at the time this readme is written the @dualbox/three last revision has an unacceptable bug which prevent us from using the last THREE.JS version.
+Two versions of three.js are tested and marked as compatible for this module: r101 and r122.
+The respective appropriate version of this module are the x.101.x and x.122.x versions.
+The module was not tested with other versions of three.js
 
 ## Concept
 

@@ -1,6 +1,6 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('@dualbox/three')) :
-    typeof define === 'function' && define.amd ? define(['@dualbox/three'], factory) :
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('three')) :
+    typeof define === 'function' && define.amd ? define(['three'], factory) :
     (global.THREEUnbiasedSSAA = factory(global.THREE));
 }(this, (function (three) { 'use strict';
 
