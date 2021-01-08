@@ -17,6 +17,12 @@ Two versions of three.js are tested and marked as compatible for this module: r1
 The respective appropriate version of this module are the x.101.x and x.122.x versions.
 The module was not tested with other versions of three.js
 
+
+## Requirements
+
+To run this library, you need to load the following `three` examples:
+- `Pass`
+
 ## Concept
 
 The algorithm is based on the algorithm of THREE.SSAARenderPass. The difference between the two algorithms is how the averaging computation is made: while the THREE.SSAARenderPass does the average of two rendereds at a time, number of samples times, the THREE.SSAAUnbiasedPass does the average of the number of samples in one time, if it is lower or equal to 8, in two times if it is not.
