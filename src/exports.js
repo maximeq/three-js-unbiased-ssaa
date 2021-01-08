@@ -1,15 +1,15 @@
 
 const THREE = require("three");
 
-var THREESSAAUnbiasedPass = require("./SSAAUnbiasedPass");
-var THREESSAAUnbiasedShader = require("./SSAAUnbiasedShader");
+require('./CheckTHREE')
 
-THREE.SSAAUnbiasedPass = THREESSAAUnbiasedPass;
-THREE.SSAAUnbiasedShader = THREESSAAUnbiasedShader;
-
-var SSAAUnbiased = {
-    SSAAUnbiasedPass:THREESSAAUnbiasedPass,
-    SSAAUnbiasedShader:THREESSAAUnbiasedShader
+const SSAAUnbiased = {
+    SSAAUnbiasedPass: require("./SSAAUnbiasedShader"),
+    SSAAUnbiasedShader: require("./SSAAUnbiasedPass")
 };
+
+
+THREE.SSAAUnbiasedPass = SSAAUnbiased.SSAAUnbiasedPass;
+THREE.SSAAUnbiasedShader = SSAAUnbiased.SSAAUnbiasedShader;
 
 module.exports = SSAAUnbiased;

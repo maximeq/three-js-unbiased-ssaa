@@ -6,6 +6,16 @@
 
     three = three && three.hasOwnProperty('default') ? three['default'] : three;
 
+    function checkExample( example, subdirectory, trueName ) {
+
+        if ( three[example] === undefined )
+            throw `THREE is missing example '${example}' and, as such, three-js-unbiased-ssaa can't work properly. You can find it` +
+            ` in '@dualbox/three/examples/js/${subdirectory !== undefined ? subdirectory + '/' : ''}${trueName || example}.js'`
+
+    }
+
+    checkExample('Pass', 'postprocessing', 'EffectComposer');
+
     /**
      * @author Manon Sutter / https://github.com/ManonSutter
      * @author Maxime Quiblier / https://github.com/maximeq
@@ -625,13 +635,14 @@
 
     var SSAAUnbiasedPass_1 = SSAAUnbiasedPass;
 
-    three.SSAAUnbiasedPass = SSAAUnbiasedPass_1;
-    three.SSAAUnbiasedShader = SSAAUnbiasedShader;
-
-    var SSAAUnbiased = {
-        SSAAUnbiasedPass:SSAAUnbiasedPass_1,
-        SSAAUnbiasedShader:SSAAUnbiasedShader
+    const SSAAUnbiased = {
+        SSAAUnbiasedPass: SSAAUnbiasedShader,
+        SSAAUnbiasedShader: SSAAUnbiasedPass_1
     };
+
+
+    three.SSAAUnbiasedPass = SSAAUnbiased.SSAAUnbiasedPass;
+    three.SSAAUnbiasedShader = SSAAUnbiased.SSAAUnbiasedShader;
 
     var exports$1 = SSAAUnbiased;
 
