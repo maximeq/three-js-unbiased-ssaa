@@ -4,8 +4,8 @@ const THREE = require("three");
 require('./CheckTHREE')
 
 const SSAAUnbiased = {
-    SSAAUnbiasedPass: require("./SSAAUnbiasedShader"),
-    SSAAUnbiasedShader: require("./SSAAUnbiasedPass")
+    SSAAUnbiasedPass: require("./SSAAUnbiasedPass"),
+    SSAAUnbiasedShader: require("./SSAAUnbiasedShader")
 };
 
 
