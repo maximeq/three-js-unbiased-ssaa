@@ -636,8 +636,8 @@
     var SSAAUnbiasedPass_1 = SSAAUnbiasedPass;
 
     const SSAAUnbiased = {
-        SSAAUnbiasedPass: SSAAUnbiasedShader,
-        SSAAUnbiasedShader: SSAAUnbiasedPass_1
+        SSAAUnbiasedPass: SSAAUnbiasedPass_1,
+        SSAAUnbiasedShader: SSAAUnbiasedShader
     };
 
 
